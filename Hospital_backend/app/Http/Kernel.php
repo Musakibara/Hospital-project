@@ -39,9 +39,9 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,//Permet a frontend React de communiquer avec Laravel comme s'ils étaient sur le même domaine
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api', //limite le nombre de requêtes pour éviter les abus
+            \Illuminate\Routing\Middleware\SubstituteBindings::class, // permet d'utiliser les IDs dans les routes
         ],
     ];
 

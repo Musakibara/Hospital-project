@@ -2,6 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\MedecinController;
+use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\RendezVousController;
+use App\Http\Controllers\Api\VisiteMedicaleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +19,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Public routes
+Route::post('/login', [AuthController::class, 'login']);
+
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'user']);
+
+    // Resources
+    Route::apiResource('medecins', MedecinController::class);
+    Route::apiResource('patients', PatientController::class);
+    Route::apiResource('rendez-vous', RendezVousController::class);
+    Route::apiResource('visites-medicales', VisiteMedicaleController::class);
 });

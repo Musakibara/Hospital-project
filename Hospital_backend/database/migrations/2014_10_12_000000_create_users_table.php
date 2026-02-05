@@ -17,8 +17,12 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['admin', 'medecin'])->default('medecin')->comment('Rôle utilisateur');
             $table->rememberToken();
             $table->timestamps();
+
+            // Crée des index sur les colonnes pour optimiser les performances des recherches et des filtres
+            $table->index('role');
         });
     }
 
