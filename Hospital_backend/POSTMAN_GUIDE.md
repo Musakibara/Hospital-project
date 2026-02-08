@@ -76,15 +76,103 @@ Pour forcer Laravel à renvoyer du JSON (et non du HTML en cas d'erreur) :
 
 ---
 
-## Astuce de Pro (Script Automatique)
-Pour que le token se mette à jour tout seul après le login :
-1.  Allez dans la requête **Login** > Onglet **Scripts** > **Post-response**.
-2.  Collez ce code :
-    ```javascript
-    if (pm.response.code === 200) {
-        var jsonData = pm.response.json();
-        pm.collectionVariables.set("token", jsonData.access_token);
-        console.log("Token mis à jour !");
+
+---
+
+# 📚 Référence Complète des Requêtes (Cheatsheet)
+
+Voici la liste exacte des requêtes à créer pour tout tester. Assurez-vous d'avoir le **Token** dans l'onglet Authorization pour chacune.
+
+## 👥 Patients
+### 1. Lister les Patients
+*   **Method**: `GET`
+*   **URL**: `{{base_url}}/patients`
+
+### 2. Créer un Patient
+*   **Method**: `POST`
+*   **URL**: `{{base_url}}/patients`
+*   **Body (JSON)**:
+    ```json
+    {
+        "numero_unique": "PAT-2024-001",
+        "nom_patient": "Alice Merveille",
+        "date_naissance": "1990-05-15",
+        "sexe": "Féminin",
+        "contact_patient": "0600000001",
+        "email_patient": "alice@test.com",
+        "adresse": "10 rue de la Paix",
+        "antecedents_medicaux": "Aucun",
+        "profession": "Enseignante"
     }
     ```
-3.  La prochaine fois que vous ferez `Login`, la variable `{{token}}` se mettra à jour toute seule pour toutes les autres requêtes !
+
+### 3. Voir un Patient
+*   **Method**: `GET`
+*   **URL**: `{{base_url}}/patients/1`
+
+---
+
+## 👨‍⚕️ Médecins
+### 1. Lister les Médecins
+*   **Method**: `GET`
+*   **URL**: `{{base_url}}/medecins`
+
+### 2. Voir un Médecin spécifique
+*   **Method**: `GET`
+*   **URL**: `{{base_url}}/medecins/1`
+
+---
+
+## 📅 Rendez-Vous
+### 1. Lister les RDV
+*   **Method**: `GET`
+*   **URL**: `{{base_url}}/rendez-vous`
+
+### 2. Prendre un RDV
+*   **Method**: `POST`
+*   **URL**: `{{base_url}}/rendez-vous`
+*   **Body (JSON)**:
+    ```json
+    {
+        "patient_id": 1,
+        "medecin_id": 1,
+        "date_heure": "2026-10-20 09:00:00",
+        "motif": "Consultation générale",
+        "statut": "prevu"
+    }
+    ```
+    *Note: Changez la date si vous avez une erreur de doublon.*
+
+### 3. Modifier le statut d'un RDV (Annuler)
+*   **Method**: `PUT`
+*   **URL**: `{{base_url}}/rendez-vous/1`
+*   **Body (JSON)**:
+    ```json
+    {
+        "statut": "annule"
+    }
+    ```
+
+---
+
+## 📝 Visites Médicales
+### 1. Enregistrer une Consultation
+*   **Method**: `POST`
+*   **URL**: `{{base_url}}/visites-medicales`
+*   **Body (JSON)**:
+    ```json
+    {
+        "patient_id": 1,
+        "medecin_id": 1,
+        "rendez_vous_id": 1,
+        "date_visite": "2026-10-20 09:30:00",
+        "examen": "Tension artérielle normale",
+        "symptomes": "Fatigue",
+        "diagnostic": "Rien à signaler",
+        "traitement": "Repos",
+        "poids": 70,
+        "taille": 175
+    }
+    ```
+    *Note: Si le RDV #1 existe, son statut passera automatiquement à `effectue`.*
+

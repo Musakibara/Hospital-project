@@ -12,6 +12,21 @@ class MedecinController extends Controller
     /**
      * Display a listing of the resource.
      */
+    /**
+     * Display a listing of the resource.
+     *
+     * @OA\Get(
+     *     path="/api/medecins",
+     *     tags={"Doctors"},
+     *     summary="List all doctors",
+     *     description="Retrieve a list of all doctors",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of doctors"
+     *     )
+     * )
+     */
     public function index()
     {
         $medecins = Medecin::with('user')->get();
@@ -20,6 +35,20 @@ class MedecinController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     */
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @OA\Post(
+     *     path="/api/medecins",
+     *     tags={"Doctors"},
+     *     summary="Create a new doctor",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=201,
+     *         description="Doctor created successfully"
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -43,6 +72,26 @@ class MedecinController extends Controller
     /**
      * Display the specified resource.
      */
+    /**
+     * Display the specified resource.
+     *
+     * @OA\Get(
+     *     path="/api/medecins/{id}",
+     *     tags={"Doctors"},
+     *     summary="Get doctor details",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Doctor details"
+     *     )
+     * )
+     */
     public function show(string $id)
     {
         $medecin = Medecin::with(['user', 'rendezVous'])->findOrFail($id);
@@ -51,6 +100,26 @@ class MedecinController extends Controller
 
     /**
      * Update the specified resource in storage.
+     */
+    /**
+     * Update the specified resource in storage.
+     *
+     * @OA\Put(
+     *     path="/api/medecins/{id}",
+     *     tags={"Doctors"},
+     *     summary="Update doctor details",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Doctor updated successfully"
+     *     )
+     * )
      */
     public function update(Request $request, string $id)
     {
@@ -74,6 +143,26 @@ class MedecinController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     */
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @OA\Delete(
+     *     path="/api/medecins/{id}",
+     *     tags={"Doctors"},
+     *     summary="Delete a doctor",
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Doctor deleted successfully"
+     *     )
+     * )
      */
     public function destroy(string $id)
     {

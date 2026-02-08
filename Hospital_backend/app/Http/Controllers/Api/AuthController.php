@@ -14,6 +14,37 @@ class AuthController extends Controller
     /**
      * Handle an incoming authentication request.
      */
+    /**
+     * Handle an incoming authentication request.
+     *
+     * @OA\Post(
+     *     path="/api/login",
+     *     tags={"Authentication"},
+     *     summary="Login user",
+     *     description="Authenticate user and return a token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email", example="admin@hospital.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="access_token", type="string"),
+     *             @OA\Property(property="token_type", type="string", example="Bearer"),
+     *             @OA\Property(property="user", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Invalid credentials"
+     *     )
+     * )
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -47,6 +78,21 @@ class AuthController extends Controller
     /**
      * Handle logout request.
      */
+    /**
+     * Handle logout request.
+     *
+     * @OA\Post(
+     *     path="/api/logout",
+     *     tags={"Authentication"},
+     *     summary="Logout user",
+     *     description="Revoke the authentication token",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Logged out successfully"
+     *     )
+     * )
+     */
     public function logout(Request $request)
     {
         // Revoke the token that was used to authenticate the current request
@@ -59,6 +105,21 @@ class AuthController extends Controller
 
     /**
      * Get the authenticated user.
+     */
+    /**
+     * Get the authenticated user.
+     *
+     * @OA\Get(
+     *     path="/api/user",
+     *     tags={"Authentication"},
+     *     summary="Get authenticated user",
+     *     description="Return user profile",
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User profile retrieved"
+     *     )
+     * )
      */
     public function user(Request $request)
     {
