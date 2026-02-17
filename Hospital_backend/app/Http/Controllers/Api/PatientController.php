@@ -43,6 +43,8 @@ class PatientController extends Controller
 
         $patient = Patient::create($validated);
 
+        NotificationController::log("New patient registered: {$patient->nom_patient}", 'success');
+
         return new PatientResource($patient);
     }
 
@@ -73,6 +75,8 @@ class PatientController extends Controller
 
         $patient->update($validated);
 
+        NotificationController::log("Patient information updated: {$patient->nom_patient}", 'info');
+
         return new PatientResource($patient);
     }
 
@@ -82,7 +86,10 @@ class PatientController extends Controller
     public function destroy(string $id)
     {
         $patient = Patient::findOrFail($id);
+        $patientName = $patient->nom_patient;
         $patient->delete();
+
+        NotificationController::log("Patient record deleted: {$patientName}", 'warning');
 
         return response()->json(['message' => 'Patient supprimé avec succès']);
     }

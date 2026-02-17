@@ -56,6 +56,8 @@ class VisiteMedicaleController extends Controller
 
         $visite = VisiteMedicale::create($validated);
 
+        NotificationController::log("New medical consultation recorded for patient #{$visite->patient_id}", 'success');
+
         // Update rendez-vous status to 'effectue' automatically if linked
         if ($visite->rendez_vous_id) {
             $rdv = RendezVous::find($visite->rendez_vous_id);

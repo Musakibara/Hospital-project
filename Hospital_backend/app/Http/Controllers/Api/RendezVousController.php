@@ -109,27 +109,43 @@ class RendezVousController extends Controller
                 'required', 
                 'date', 
                 'after:now',
-                Rule::unique('rendez_vous')->where(function ($query) use ($request) {
-                    return $query->where('medecin_id', $request->medecin_id)
-                                 ->where('date_heure', $request->date_heure);
-                }),
-                // Check if replacement doctor is also free at that time (optional but good)
-                Rule::unique('rendez_vous', 'date_heure')->where(function ($query) use ($request) {
-                    if ($request->medecin_remplacant_id) {
-                        return $query->where('medecin_id', $request->medecin_remplacant_id);
+                function ($attribute, $value, $fail) use ($request) {
+                    $start = \Carbon\Carbon::parse($value);
+                    $end = $start->copy()->addMinutes(RendezVous::DURATION_MINUTES);
+                    
+                    $overlap = RendezVous::where('medecin_id', $request->medecin_id)
+                        ->where(function ($query) use ($start, $end) {
+                            $query->whereBetween('date_heure', [$start, $end->copy()->subSecond()])
+                                  ->orWhere(function ($q) use ($start, $end) {
+                                      $q->where('date_heure', '<=', $start)
+                                        ->whereRaw("DATE_ADD(date_heure, INTERVAL ? MINUTE) > ?", [RendezVous::DURATION_MINUTES, $start]);
+                                  });
+                        })
+                        ->where('statut', '!=', 'annule')
+                        ->exists();
+
+                    if ($overlap) {
+                        $fail('Ce créneau horaire chevauche un rendez-vous existant pour ce médecin.');
                     }
-                    return $query->whereRaw('1=0'); // Skip if no replacement
-                }),
+
+                    // Check if doctor is available (disponible)
+                    $medecin = \App\Models\Medecin::find($request->medecin_id);
+                    if ($medecin && !$medecin->disponible) {
+                        $fail('Le médecin sélectionné est actuellement indisponible (en congé ou absent).');
+                    }
+                },
             ],
             'motif' => 'required|string|max:255',
             'statut' => 'required|in:prevu,confirme,en_cours,effectue,annule,reporte',
             'observation' => 'nullable|string',
         ], [
-            'date_heure.unique' => 'Ce créneau horaire est déjà réservé pour ce médecin (ou son remplaçant).',
             'medecin_remplacant_id.different' => 'Le médecin remplaçant doit être différent du médecin principal.',
         ]);
 
+
         $rendezVous = RendezVous::create($validated);
+
+        NotificationController::log("New appointment scheduled for patient #{$rendezVous->patient_id}", 'info');
 
         // Load relationships for the email
         $rendezVous->load(['patient', 'medecin', 'medecinRemplacant']);
@@ -214,18 +230,53 @@ class RendezVousController extends Controller
             'date_heure' => [
                 'sometimes', 
                 'date',
-                Rule::unique('rendez_vous')->where(function ($query) use ($request, $rendezVous) {
+                'after:now',
+                function ($attribute, $value, $fail) use ($request, $rendezVous) {
                     $medecinId = $request->input('medecin_id', $rendezVous->medecin_id);
-                    return $query->where('medecin_id', $medecinId)
-                                 ->where('date_heure', $request->input('date_heure', $rendezVous->date_heure));
-                })->ignore($rendezVous->id),
+
+                    $start = \Carbon\Carbon::parse($value);
+                    $end = $start->copy()->addMinutes(RendezVous::DURATION_MINUTES);
+                    
+                    $overlap = RendezVous::where('medecin_id', $medecinId)
+                        ->where('id', '!=', $rendezVous->id)
+                        ->where(function ($query) use ($start, $end) {
+                            $query->whereBetween('date_heure', [$start, $end->copy()->subSecond()])
+                                  ->orWhere(function ($q) use ($start, $end) {
+                                      $q->where('date_heure', '<=', $start)
+                                        ->whereRaw("DATE_ADD(date_heure, INTERVAL ? MINUTE) > ?", [RendezVous::DURATION_MINUTES, $start]);
+                                  });
+                        })
+                        ->where('statut', '!=', 'annule')
+                        ->exists();
+
+                    if ($overlap) {
+                        $fail('Ce nouveau créneau chevauche un rendez-vous existant.');
+                    }
+
+                    // Check if doctor is available (disponible)
+                    $medecin = \App\Models\Medecin::find($medecinId);
+                    if ($medecin && !$medecin->disponible) {
+                        $fail('Le médecin sélectionné est actuellement indisponible.');
+                    }
+                },
             ],
             'motif' => 'sometimes|string|max:255',
-            'statut' => 'sometimes|in:prevu,confirme,en_cours,effectue,annule,reporte',
+            'statut' => [
+                'sometimes',
+                'in:prevu,confirme,en_cours,effectue,annule,reporte',
+                function ($attribute, $value, $fail) use ($rendezVous) {
+                    if (in_array($rendezVous->statut, ['annule', 'effectue'])) {
+                        $fail("Impossible de modifier un rendez-vous qui est déjà '{$rendezVous->statut}'.");
+                    }
+                }
+            ],
             'observation' => 'nullable|string',
         ]);
 
+
         $rendezVous->update($validated);
+
+        NotificationController::log("Appointment #{$rendezVous->id} updated to status: {$rendezVous->statut}", 'info');
 
         return new RendezVousResource($rendezVous);
     }
@@ -256,7 +307,10 @@ class RendezVousController extends Controller
     public function destroy(string $id)
     {
         $rendezVous = RendezVous::findOrFail($id);
+        $rendezId = $rendezVous->id;
         $rendezVous->delete();
+
+        NotificationController::log("Appointment #{$rendezId} cancelled", 'warning');
 
         return response()->json(['message' => 'Rendez-vous annulé avec succès']);
     }

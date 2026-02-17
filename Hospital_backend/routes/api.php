@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\RendezVousController;
 use App\Http\Controllers\Api\VisiteMedicaleController;
 
+
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -27,9 +29,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
 
+
+
     // Resources
     Route::apiResource('medecins', MedecinController::class);
     Route::apiResource('patients', PatientController::class);
     Route::apiResource('rendez-vous', RendezVousController::class);
     Route::apiResource('visites-medicales', VisiteMedicaleController::class);
+
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
 });

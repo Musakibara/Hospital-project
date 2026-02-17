@@ -24,8 +24,11 @@ class MedecinResource extends JsonResource
             'genre_medecin' => $this->genre_medecin,
             'actif' => $this->actif,
             'disponible' => $this->disponible,
+            'rendezVous' => RendezVousResource::collection($this->whenLoaded('rendezVous')),
+            'visitesMedicales' => VisiteMedicaleResource::collection($this->whenLoaded('visitesMedicales')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+
         ];
     }
 }

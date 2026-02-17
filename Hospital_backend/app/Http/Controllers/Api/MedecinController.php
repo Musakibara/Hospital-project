@@ -7,6 +7,13 @@ use App\Models\Medecin;
 use Illuminate\Http\Request;
 use App\Http\Resources\MedecinResource;
 
+use App\Models\User;
+use App\Mail\DoctorWelcomeMail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
 class MedecinController extends Controller
 {
     /**
@@ -27,11 +34,27 @@ class MedecinController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $medecins = Medecin::with('user')->get();
+        $query = Medecin::with('user');
+
+        if ($request->has('disponible')) {
+            $query->where('disponible', $request->boolean('disponible'));
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nom_medecin', 'like', "%{$search}%")
+                  ->orWhere('specialite', 'like', "%{$search}%")
+                  ->orWhere('email_medecin', 'like', "%{$search}%");
+            });
+        }
+
+        $medecins = $query->get();
         return MedecinResource::collection($medecins);
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -53,21 +76,44 @@ class MedecinController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id|unique:medecins,user_id',
             'nom_medecin' => 'required|string|max:255',
             'specialite' => 'required|string|max:255',
-            'contact_medecin' => 'required|string|max:20',
-            'email_medecin' => 'required|email|max:255',
+            'contact_medecin' => 'required|string|max:255',
+            'email_medecin' => 'required|email|max:255|unique:users,email',
             'genre_medecin' => 'required|in:Masculin,Féminin,Autre',
             'actif' => 'boolean',
             'can_edit_profile' => 'boolean',
             'disponible' => 'boolean',
         ]);
 
-        $medecin = Medecin::create($validated);
+        return DB::transaction(function () use ($validated) {
+            // 1. Generate a secure random password
+            $plainPassword = Str::random(10);
 
-        return new MedecinResource($medecin);
+            // 2. Create the User account
+            $user = User::create([
+                'name' => $validated['nom_medecin'],
+                'email' => $validated['email_medecin'],
+                'password' => Hash::make($plainPassword),
+                'role' => 'medecin',
+            ]);
+
+            // 3. Create the Medecin profile linked to the user
+            $medecinData = array_merge($validated, ['user_id' => $user->id]);
+            $medecin = Medecin::create($medecinData);
+
+            // 4. Send Welcome Email
+            Mail::to($validated['email_medecin'])->send(new DoctorWelcomeMail(
+                $validated['nom_medecin'],
+                $validated['email_medecin'],
+                $plainPassword
+            ));
+
+            return new MedecinResource($medecin);
+        });
     }
+
+
 
     /**
      * Display the specified resource.
@@ -94,9 +140,15 @@ class MedecinController extends Controller
      */
     public function show(string $id)
     {
-        $medecin = Medecin::with(['user', 'rendezVous'])->findOrFail($id);
+        $medecin = Medecin::with([
+            'user', 
+            'rendezVous.patient', 
+            'visitesMedicales.patient'
+        ])->findOrFail($id);
+        
         return new MedecinResource($medecin);
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -126,15 +178,20 @@ class MedecinController extends Controller
         $medecin = Medecin::findOrFail($id);
 
         $validated = $request->validate([
-            'nom_medecin' => 'sometimes|string|max:255',
-            'specialite' => 'sometimes|string|max:255',
-            'contact_medecin' => 'sometimes|string|max:20',
-            'email_medecin' => 'sometimes|email|max:255',
-            'genre_medecin' => 'sometimes|in:Masculin,Féminin,Autre',
-            'actif' => 'boolean',
+            'nom_medecin' => 'sometimes|required|string|max:255',
+            'specialite' => 'sometimes|required|string|max:255',
+            'contact_medecin' => 'sometimes|required|string|max:255',
+            'email_medecin' => 'sometimes|required|email|max:255',
+            'genre_medecin' => 'sometimes|required|in:Masculin,Féminin,Autre',
+            'actif' => 'sometimes|boolean',
             'can_edit_profile' => 'boolean',
-            'disponible' => 'boolean',
+            'disponible' => 'sometimes|boolean',
         ]);
+
+        // Logic: if account is deactivated, it must be unavailable
+        if (isset($validated['actif']) && $validated['actif'] == false) {
+            $validated['disponible'] = false;
+        }
 
         $medecin->update($validated);
 
@@ -167,8 +224,30 @@ class MedecinController extends Controller
     public function destroy(string $id)
     {
         $medecin = Medecin::findOrFail($id);
-        $medecin->delete();
 
-        return response()->json(['message' => 'Médecin supprimé avec succès']);
+        try {
+            return DB::transaction(function () use ($medecin) {
+                $user = $medecin->user;
+                
+                // Delete the medecin profile
+                $medecin->delete();
+
+                // Delete the associated user account if it exists
+                if ($user) {
+                    $user->delete();
+                }
+
+                return response()->json(['message' => 'Médecin et compte utilisateur supprimés avec succès']);
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Check if it's a constraint violation error (SQLSTATE 23000)
+            if ($e->getCode() == 23000) {
+                return response()->json([
+                    'message' => 'Impossible de supprimer ce médecin car il possède un historique de rendez-vous ou de visites. Veuillez plutôt le désactiver pour conserver les données.'
+                ], 422);
+            }
+            throw $e;
+        }
     }
+
 }

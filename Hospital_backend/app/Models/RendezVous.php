@@ -11,6 +11,12 @@ class RendezVous extends Model
     use HasFactory, SoftDeletes;
 
     /**
+     * Standard duration of an appointment in minutes.
+     */
+    public const DURATION_MINUTES = 30;
+
+
+    /**
      * The table associated with the model.
      *
      * @var string

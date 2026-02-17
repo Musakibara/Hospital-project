@@ -60,6 +60,17 @@ class AuthController extends Controller
             ]);
         }
 
+        // Check if medecin is active
+        if ($user->role === 'medecin') {
+            $medecin = $user->medecin;
+            if ($medecin && !$medecin->actif) {
+                throw ValidationException::withMessages([
+                    'email' => ['Votre compte est inactif. Veuillez contacter l\'administrateur.'],
+                ]);
+            }
+        }
+
+
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
 
