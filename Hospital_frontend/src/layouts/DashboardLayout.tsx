@@ -87,10 +87,15 @@ const DashboardLayout = () => {
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
         { icon: Users, label: 'Patients', href: '/patients' },
-        { icon: LayoutDashboard, label: 'Doctors', href: '/doctors' },
-        { icon: Calendar, label: 'Appointments', href: '/appointments' },
+        {
+            icon: LayoutDashboard,
+            label: 'Médecins',
+            href: '/doctors',
+            roles: ['admin'] // Uniquement pour les admins
+        },
+        { icon: Calendar, label: 'Rendez-vous', href: '/appointments' },
         { icon: Stethoscope, label: 'Consultations', href: '/consultations' },
-    ];
+    ].filter(item => !item.roles || (user && item.roles.includes(user.role || '')));
 
     return (
         <div className="min-h-screen bg-slate-50/50 flex">
@@ -192,49 +197,47 @@ const DashboardLayout = () => {
                                             </Button>
                                         </div>
                                         <div className="max-h-[400px] overflow-auto">
-                                            {notifications.length === 0 ? (
+                                            {notifications.filter(n => !n.read_at).length === 0 ? (
                                                 <div className="p-8 text-center">
                                                     <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                                                    <p className="text-sm text-slate-400">No notifications yet</p>
+                                                    <p className="text-sm text-slate-400">Pas de nouvelles notifications</p>
                                                 </div>
                                             ) : (
-                                                notifications.map((notif) => (
-                                                    <div
-                                                        key={notif.id}
-                                                        className={cn(
-                                                            "p-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors flex gap-3 group relative",
-                                                            !notif.read_at && "bg-teal-50/30"
-                                                        )}
-                                                        onClick={() => !notif.read_at && handleMarkRead(notif.id)}
-                                                    >
-                                                        <div className={cn(
-                                                            "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center",
-                                                            notif.type === 'success' ? "bg-green-100 text-green-600" :
-                                                                notif.type === 'warning' ? "bg-amber-100 text-amber-600" :
-                                                                    "bg-blue-100 text-blue-600"
-                                                        )}>
-                                                            {notif.type === 'success' ? <Check className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm text-slate-900 font-medium leading-snug">
-                                                                {notif.message}
-                                                            </p>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                                                                    {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
-                                                                </span>
-                                                                <span className="text-[10px] text-slate-300">•</span>
-                                                                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                                                    <UserIcon className="w-3 h-3" />
-                                                                    {notif.user?.name || 'System'}
-                                                                </span>
+                                                notifications
+                                                    .filter(n => !n.read_at)
+                                                    .slice(0, 10)
+                                                    .map((notif) => (
+                                                        <div
+                                                            key={notif.id}
+                                                            className="p-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors flex gap-3 group relative bg-teal-50/30"
+                                                            onClick={() => handleMarkRead(notif.id)}
+                                                        >
+                                                            <div className={cn(
+                                                                "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center",
+                                                                notif.type === 'success' ? "bg-green-100 text-green-600" :
+                                                                    notif.type === 'warning' ? "bg-amber-100 text-amber-600" :
+                                                                        "bg-blue-100 text-blue-600"
+                                                            )}>
+                                                                {notif.type === 'success' ? <Check className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
                                                             </div>
-                                                        </div>
-                                                        {!notif.read_at && (
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm text-slate-900 font-medium leading-snug">
+                                                                    {notif.message}
+                                                                </p>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                                                        {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-slate-300">•</span>
+                                                                    <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                                                        <UserIcon className="w-3 h-3" />
+                                                                        {notif.user?.name || 'System'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                             <div className="absolute top-4 right-4 w-2 h-2 bg-teal-500 rounded-full" />
-                                                        )}
-                                                    </div>
-                                                ))
+                                                        </div>
+                                                    ))
                                             )}
                                         </div>
                                         <div className="p-3 bg-slate-50/50 border-t border-slate-100 text-center">

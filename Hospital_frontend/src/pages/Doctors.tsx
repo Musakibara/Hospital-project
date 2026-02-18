@@ -109,16 +109,16 @@ const Doctors = () => {
                 disponible: newAvailabilityStatus
             });
 
-            const statusMsg = newActiveStatus ? 'actif' : 'inactif';
-            const availMsg = !newActiveStatus ? ' et indisponible' : '';
-            toast.success(`Dr. ${doctor.nom_medecin} est maintenant ${statusMsg}${availMsg}`);
+            const statusMsg = newActiveStatus ? 'active' : 'inactive';
+            const availMsg = !newActiveStatus ? ' and unavailable' : '';
+            toast.success(`Dr. ${doctor.nom_medecin} is now ${statusMsg}${availMsg}`);
         } catch (error) {
             console.error("Failed to toggle active status", error);
             // Rollback on error
             setDoctors(prev => prev.map(d =>
                 d.id === doctor.id ? { ...d, actif: !newActiveStatus, disponible: doctor.disponible } : d
             ));
-            toast.error("Erreur lors du changement de l'état actif");
+            toast.error("Error while changing active status");
         }
     };
 
@@ -136,7 +136,7 @@ const Doctors = () => {
 
         try {
             await doctorService.updateDoctor(doctor.id, { disponible: newStatus });
-            toast.success(`Dr. ${doctor.nom_medecin} est maintenant ${newStatus ? 'disponible' : 'indisponible'}`);
+            toast.success(`Dr. ${doctor.nom_medecin} is now ${newStatus ? 'available' : 'unavailable'}`);
         } catch (error) {
             console.error("Failed to toggle availability", error);
             // Rollback on error
@@ -196,7 +196,7 @@ const Doctors = () => {
                 <div className="relative flex-1 w-full">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <Input
-                        placeholder="Rechercher par nom ou spécialité..."
+                        placeholder="Search by name or specialty..."
                         value={searchTerm}
                         onChange={handleSearch}
                         className="pl-11 h-11 w-full bg-white/50 border-slate-200/60 rounded-xl focus:ring-teal-500/20 focus:border-teal-500 transition-all"
@@ -205,9 +205,9 @@ const Doctors = () => {
 
                 <div className="flex items-center gap-1 p-1 bg-slate-100/50 rounded-xl border border-slate-200/60 w-full md:w-auto">
                     {[
-                        { label: 'Tous', value: 'all', icon: LayoutPanelLeft },
-                        { label: 'Disponibles', value: 'true', icon: CheckCircle2, color: 'text-teal-600' },
-                        { label: 'Absents', value: 'false', icon: XCircle, color: 'text-rose-500' }
+                        { label: 'All', value: 'all', icon: LayoutPanelLeft },
+                        { label: 'Available', value: 'true', icon: CheckCircle2, color: 'text-teal-600' },
+                        { label: 'Absent', value: 'false', icon: XCircle, color: 'text-rose-500' }
                     ].map((btn) => (
                         <button
                             key={btn.value}

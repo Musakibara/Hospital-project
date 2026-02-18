@@ -17,11 +17,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const currentUser = authService.getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-        }
-        setIsLoading(false);
+        const checkAuth = async () => {
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (token) {
+                    // Vérification réelle de la validité du token avec le backend
+                    const currentUser = await authService.user();
+                    setUser(currentUser);
+                }
+            } catch (error) {
+                console.error("Session invalide ou expirée", error);
+                // Si l'appel API échoue (401), on nettoie tout
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_info');
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkAuth();
     }, []);
 
     const register = async (name: string, email: string, password: string) => {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Phone, Plus, Edit, Trash2, MapPin, Calendar, FileText, User } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 
 const Patients = () => {
@@ -107,15 +108,26 @@ const Patients = () => {
                 </Button>
             </div>
 
-            <div className="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-200 shadow-sm max-w-sm w-full">
-                <Search className="w-5 h-5 text-slate-400" />
-                <Input
-                    placeholder="Search by name, email or phone..."
-                    value={searchTerm}
-                    onChange={handleSearch}
-                    className="border-none shadow-none focus-visible:ring-0 h-auto p-0 text-base"
-                />
-            </div>
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative group/search max-w-md w-full"
+            >
+                <div className="relative flex items-center bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md focus-within:shadow-lg focus-within:ring-4 focus-within:ring-teal-500/5 focus-within:border-teal-500/30">
+                    <div className="pl-4 pr-2">
+                        <Search className="w-5 h-5 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
+                    </div>
+                    <Input
+                        placeholder="Search by name, email or phone..."
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        className="border-none shadow-none focus-visible:ring-0 h-12 px-0 text-slate-700 placeholder:text-slate-400 font-medium bg-transparent"
+                    />
+                    <div className="pr-4">
+                        <div className="w-2 h-2 rounded-full bg-teal-500/20 group-focus-within/search:bg-teal-500 group-focus-within/search:animate-pulse" />
+                    </div>
+                </div>
+            </motion.div>
 
             {loading && patients.length === 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

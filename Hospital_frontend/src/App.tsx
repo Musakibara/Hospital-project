@@ -11,8 +11,8 @@ import Appointments from './pages/Appointments';
 import Consultations from './pages/Consultations';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-    const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactElement, allowedRoles?: string[] }) => {
+    const { isAuthenticated, isLoading, user } = useAuth();
 
     if (isLoading) {
         return (
@@ -26,10 +26,35 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
         return <Navigate to="/login" replace />;
     }
 
+    if (allowedRoles && user && !allowedRoles.includes(user.role || '')) {
+        // Rediriger vers le dashboard si le rôle n'est pas autorisé
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+};
+
+// Public Route Component (Redirects to dashboard if already authenticated)
+const PublicRoute = ({ children }: { children: React.ReactElement }) => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+            </div>
+        );
+    }
+
+    if (isAuthenticated) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
     return children;
 };
 
 import { Toaster } from 'react-hot-toast';
+import Signup from './pages/Signup';
 
 function App() {
     return (
@@ -37,7 +62,16 @@ function App() {
             <AuthProvider>
                 <Toaster position="top-right" />
                 <Routes>
-                    <Route path="/login" element={<Login />} />
+                    <Route path="/login" element={
+                        <PublicRoute>
+                            <Login />
+                        </PublicRoute>
+                    } />
+                    <Route path="/signup" element={
+                        <PublicRoute>
+                            <Signup />
+                        </PublicRoute>
+                    } />
 
                     <Route path="/" element={
                         <ProtectedRoute>
@@ -46,7 +80,11 @@ function App() {
                     }>
                         <Route index element={<Navigate to="/dashboard" replace />} />
                         <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="doctors" element={<Doctors />} />
+                        <Route path="doctors" element={
+                            <ProtectedRoute allowedRoles={['admin']}>
+                                <Doctors />
+                            </ProtectedRoute>
+                        } />
                         <Route path="patients" element={<Patients />} />
                         <Route path="notifications" element={<Notifications />} />
                         <Route path="appointments" element={<Appointments />} />

@@ -33,12 +33,12 @@ const Appointments = () => {
     });
 
     const statutLabels: Record<string, string> = {
-        prevu: 'Prévu',
-        confirme: 'Confirmé',
-        en_cours: 'En cours',
-        effectue: 'Terminé',
-        annule: 'Annulé',
-        reporte: 'Reporté'
+        prevu: 'Scheduled',
+        confirme: 'Confirmed',
+        en_cours: 'In Progress',
+        effectue: 'Completed',
+        annule: 'Cancelled',
+        reporte: 'Rescheduled'
     };
 
     useEffect(() => {
@@ -139,12 +139,12 @@ const Appointments = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Rendez-vous</h1>
-                    <p className="text-slate-500 mt-1">Gérez les rendez-vous et les visites des patients.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Appointments</h1>
+                    <p className="text-slate-500 mt-1">Plan and track medical visits and procedures.</p>
                 </div>
-                <Button onClick={() => setIsModalOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20">
+                <Button onClick={() => { setIsEditing(false); setCurrentAppointment({ statut: 'prevu' }); setIsModalOpen(true); }} className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20">
                     <Plus className="w-4 h-4 mr-2" />
-                    Nouveau Rendez-vous
+                    New Appointment
                 </Button>
             </div>
 
@@ -172,7 +172,7 @@ const Appointments = () => {
                                 value={filterDoctor}
                                 onChange={(e) => setFilterDoctor(e.target.value)}
                             >
-                                <option value="">Tous les médecins</option>
+                                <option value="">All doctors</option>
                                 {doctors.map(doc => (
                                     <option key={doc.id} value={doc.id}>Dr. {doc.nom_medecin}</option>
                                 ))}
@@ -182,7 +182,7 @@ const Appointments = () => {
 
                         {(filterDate || filterDoctor || filterStatus) && (
                             <Button variant="ghost" size="sm" onClick={clearFilters} className="text-slate-500 hover:text-rose-500 hover:bg-rose-50 rounded-lg">
-                                <X className="w-4 h-4 mr-2" /> Effacer
+                                <X className="w-4 h-4 mr-2" /> Clear
                             </Button>
                         )}
                     </div>
@@ -199,12 +199,12 @@ const Appointments = () => {
 
                         <div className="flex bg-slate-100/60 p-1 rounded-xl border border-slate-200/60">
                             {[
-                                { label: 'Tous', value: '', icon: LayoutPanelLeft },
-                                { label: 'Prévus', value: 'prevu', icon: CalendarIcon, color: 'text-blue-500' },
-                                { label: 'Confirmés', value: 'confirme', icon: CheckCircle2, color: 'text-teal-600' },
-                                { label: 'En cours', value: 'en_cours', icon: RefreshCw, color: 'text-amber-500' },
-                                { label: 'Terminés', value: 'effectue', icon: CheckCircle2, color: 'text-indigo-600' },
-                                { label: 'Annulés', value: 'annule', icon: XCircle, color: 'text-rose-500' }
+                                { label: 'All', value: '', icon: LayoutPanelLeft },
+                                { label: 'Scheduled', value: 'prevu', icon: CalendarIcon, color: 'text-blue-500' },
+                                { label: 'Confirmed', value: 'confirme', icon: CheckCircle2, color: 'text-teal-600' },
+                                { label: 'In Progress', value: 'en_cours', icon: RefreshCw, color: 'text-amber-500' },
+                                { label: 'Completed', value: 'effectue', icon: CheckCircle2, color: 'text-indigo-600' },
+                                { label: 'Cancelled', value: 'annule', icon: XCircle, color: 'text-rose-500' }
                             ].map((s) => (
                                 <button
                                     key={s.value}
@@ -316,40 +316,45 @@ const Appointments = () => {
                 title={isEditing ? "Modifier le rendez-vous" : "Nouveau Rendez-vous"}
             >
                 <form onSubmit={handleBook} className="space-y-4">
-                    <div className="space-y-4">
-                        <label className="text-sm font-medium text-slate-700">Patient</label>
-                        <div className="relative">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700">Patient Selection</label>
+                        <div className="relative group/search">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-slate-400" />
+                                <Search className="h-4 w-4 text-teal-500 group-focus-within/search:scale-110 transition-transform" />
                             </div>
                             <Input
-                                placeholder="Rechercher un patient par nom..."
+                                placeholder="Start typing patient name to search..."
                                 value={patientSearch}
                                 onChange={(e) => setPatientSearch(e.target.value)}
-                                className="pl-10"
+                                className="pl-11 h-12 bg-slate-50 border-slate-200/80 rounded-2xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all font-medium"
                             />
                         </div>
-                        <select
-                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
-                            required
-                            value={currentAppointment.patient_id || ''}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setCurrentAppointment({ ...currentAppointment, patient_id: val ? parseInt(val) : undefined });
-                            }}
-                        >
-                            <option value="">Sélectionner le patient...</option>
-                            {patients.map(p => (
-                                <option key={p.id} value={p.id}>{p.nom_patient} ({p.numero_unique})</option>
-                            ))}
-                        </select>
+                        <div className="relative group/select">
+                            <select
+                                className="flex h-12 w-full appearance-none rounded-2xl border border-slate-200/80 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900/20 transition-all cursor-pointer"
+                                required
+                                value={currentAppointment.patient_id || ''}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCurrentAppointment({ ...currentAppointment, patient_id: val ? parseInt(val) : undefined });
+                                }}
+                            >
+                                <option value="">Results ({patients.length} patients found)</option>
+                                {patients.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nom_patient} — ID: {p.numero_unique}</option>
+                                ))}
+                            </select>
+                            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                <User className="w-4 h-4 text-slate-400" />
+                            </div>
+                        </div>
                     </div>
 
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Médecin</label>
+                        <label className="text-sm font-medium text-slate-700">Medical Staff</label>
                         <select
-                            className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                            className="flex h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-sm font-medium focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900/20 transition-all"
                             required
                             value={currentAppointment.medecin_id || ''}
                             onChange={(e) => {
@@ -357,19 +362,18 @@ const Appointments = () => {
                                 setCurrentAppointment({ ...currentAppointment, medecin_id: val ? parseInt(val) : undefined });
                             }}
                         >
-                            <option value="">Sélectionner un médecin...</option>
+                            <option value="">Select a doctor...</option>
                             {doctors
                                 .filter(doc => doc.disponible || doc.id === currentAppointment.medecin_id)
                                 .map(doc => (
-                                    <option key={doc.id} value={doc.id}>Dr. {doc.nom_medecin} - {doc.specialite}</option>
+                                    <option key={doc.id} value={doc.id}>Dr. {doc.nom_medecin} — {doc.specialite}</option>
                                 ))}
                         </select>
-
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Date et Heure</label>
+                            <label className="text-sm font-medium text-slate-700">Date & Time</label>
                             <Input
                                 type="datetime-local"
                                 required
@@ -380,34 +384,37 @@ const Appointments = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Statut</label>
+                            <label className="text-sm font-medium text-slate-700">Status</label>
                             <select
-                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                                className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900/20 transition-all cursor-pointer"
                                 value={currentAppointment.statut || 'prevu'}
                                 onChange={(e) => setCurrentAppointment({ ...currentAppointment, statut: e.target.value as any })}
                             >
-                                <option value="prevu">Programmé (Schedules)</option>
-                                <option value="confirme">Confirmé</option>
+                                <option value="prevu">Scheduled</option>
+                                <option value="confirme">Confirmed</option>
+                                <option value="en_cours">In Progress</option>
+                                <option value="effectue">Completed</option>
+                                <option value="annule">Cancelled</option>
                             </select>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Motif</label>
+                        <label className="text-sm font-medium text-slate-700">Reason / Motif</label>
                         <Input
                             required
-                            placeholder="Motif de la visite"
+                            placeholder="Reason for appointment"
                             value={currentAppointment.motif || ''}
                             onChange={(e) => setCurrentAppointment({ ...currentAppointment, motif: e.target.value })}
                         />
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
-                            Annuler
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl">
+                            Cancel
                         </Button>
-                        <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white">
-                            {isEditing ? "Enregistrer les modifications" : "Confirmer le rendez-vous"}
+                        <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-8 rounded-xl shadow-lg shadow-teal-500/20 transition-all font-bold">
+                            {isEditing ? "Save Changes" : "Confirm Appointment"}
                         </Button>
                     </div>
                 </form>
