@@ -27,8 +27,9 @@ export const authService = {
         const response = await api.post<LoginResponse>('/register', { name, email, password });
         const { access_token, user } = response.data;
 
-        localStorage.setItem('auth_token', access_token);
-        localStorage.setItem('user_info', JSON.stringify(user));
+        // Utilisation de sessionStorage au lieu de localStorage pour que la session s'arrête à la fermeture du navigateur
+        sessionStorage.setItem('auth_token', access_token);
+        sessionStorage.setItem('user_info', JSON.stringify(user));
 
         return user;
     },
@@ -37,8 +38,9 @@ export const authService = {
         const response = await api.post<LoginResponse>('/login', { email, password });
         const { access_token, user } = response.data;
 
-        localStorage.setItem('auth_token', access_token);
-        localStorage.setItem('user_info', JSON.stringify(user));
+        // Utilisation de sessionStorage au lieu de localStorage pour que la session s'arrête à la fermeture du navigateur
+        sessionStorage.setItem('auth_token', access_token);
+        sessionStorage.setItem('user_info', JSON.stringify(user));
 
         return user;
     },
@@ -49,17 +51,19 @@ export const authService = {
         } catch (error) {
             console.error('Logout failed', error);
         } finally {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_info');
+            // Nettoyage de sessionStorage lors de la déconnexion
+            sessionStorage.removeItem('auth_token');
+            sessionStorage.removeItem('user_info');
         }
     },
 
     getCurrentUser(): User | null {
-        const userStr = localStorage.getItem('user_info');
+        const userStr = sessionStorage.getItem('user_info');
         return userStr ? JSON.parse(userStr) : null;
     },
 
     isAuthenticated(): boolean {
-        return !!localStorage.getItem('auth_token');
+        // Vérifie si le token existe dans sessionStorage
+        return !!sessionStorage.getItem('auth_token');
     }
 };

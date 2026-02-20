@@ -19,7 +19,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const token = localStorage.getItem('auth_token');
+                // On vérifie la présence du jeton dans sessionStorage au chargement
+                const token = sessionStorage.getItem('auth_token');
                 if (token) {
                     // Vérification réelle de la validité du token avec le backend
                     const currentUser = await authService.user();
@@ -28,8 +29,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } catch (error) {
                 console.error("Session invalide ou expirée", error);
                 // Si l'appel API échoue (401), on nettoie tout
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_info');
+                // Nettoyage de sessionStorage si la session est invalide
+                sessionStorage.removeItem('auth_token');
+                sessionStorage.removeItem('user_info');
                 setUser(null);
             } finally {
                 setIsLoading(false);

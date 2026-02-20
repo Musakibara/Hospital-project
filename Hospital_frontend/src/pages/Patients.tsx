@@ -3,7 +3,7 @@ import { patientService, Patient } from '@/services/patientService';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Phone, Plus, Edit, Trash2, MapPin, Calendar, FileText, User } from 'lucide-react';
+import { Search, Phone, Plus, Edit, Trash2, MapPin, Calendar, FileText, SortAsc, SortDesc } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -18,19 +18,21 @@ const Patients = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentPatient, setCurrentPatient] = useState<Partial<Patient>>({});
     const [isEditing, setIsEditing] = useState(false);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Direction du tri (A-Z ou Z-A)
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            fetchPatients(currentPage, searchTerm);
+            fetchPatients(currentPage, searchTerm, sortDirection);
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, currentPage]);
+    }, [searchTerm, currentPage, sortDirection]);
 
-    const fetchPatients = async (page: number, search: string) => {
+    const fetchPatients = async (page: number, search: string, direction: string = 'asc') => {
         setLoading(true);
         try {
-            const response = await patientService.getPatients(page, search);
+            // Appel au service avec les paramètres de pagination, recherche et direction de tri
+            const response = await patientService.getPatients(page, search, 'nom_patient', direction);
             setPatients(response.data);
             setTotalPages(response.meta.last_page);
         } catch (error) {
@@ -71,7 +73,7 @@ const Patients = () => {
         if (confirm('Are you sure you want to delete this patient?')) {
             try {
                 await patientService.deletePatient(id);
-                fetchPatients(currentPage, searchTerm);
+                fetchPatients(currentPage, searchTerm, sortDirection);
             } catch (error) {
                 console.error("Failed to delete patient", error);
                 alert("Failed to delete patient. Please try again.");
@@ -88,7 +90,7 @@ const Patients = () => {
                 await patientService.createPatient(currentPatient as Patient);
             }
             setIsModalOpen(false);
-            fetchPatients(currentPage, searchTerm);
+            fetchPatients(currentPage, searchTerm, sortDirection);
         } catch (error: any) {
             console.error("Failed to save patient", error);
             alert(`Failed to save: ${error.response?.data?.message || error.message}`);
@@ -108,26 +110,53 @@ const Patients = () => {
                 </Button>
             </div>
 
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative group/search max-w-md w-full"
-            >
-                <div className="relative flex items-center bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md focus-within:shadow-lg focus-within:ring-4 focus-within:ring-teal-500/5 focus-within:border-teal-500/30">
-                    <div className="pl-4 pr-2">
-                        <Search className="w-5 h-5 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
-                    </div>
-                    <Input
-                        placeholder="Search by name, email or phone..."
-                        value={searchTerm}
-                        onChange={handleSearch}
-                        className="border-none shadow-none focus-visible:ring-0 h-12 px-0 text-slate-700 placeholder:text-slate-400 font-medium bg-transparent"
-                    />
-                    <div className="pr-4">
-                        <div className="w-2 h-2 rounded-full bg-teal-500/20 group-focus-within/search:bg-teal-500 group-focus-within/search:animate-pulse" />
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-4 w-full lg:max-w-3xl items-start sm:items-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative group/search max-w-md w-full"
+                    >
+                        <div className="relative flex items-center bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md focus-within:shadow-lg focus-within:ring-4 focus-within:ring-teal-500/5 focus-within:border-teal-500/30">
+                            <div className="pl-4 pr-2">
+                                <Search className="w-5 h-5 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
+                            </div>
+                            <Input
+                                placeholder="Search by name, email or phone..."
+                                value={searchTerm}
+                                onChange={handleSearch}
+                                className="border-none shadow-none focus-visible:ring-0 h-10 px-0 text-slate-700 placeholder:text-slate-400 font-medium bg-transparent"
+                            />
+                            <div className="pr-4">
+                                <div className="w-2 h-2 rounded-full bg-teal-500/20 group-focus-within/search:bg-teal-500 group-focus-within/search:animate-pulse" />
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Bouton de tri A-Z / Z-A */}
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                            className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700 h-10 rounded-xl px-4 flex items-center gap-2 shadow-sm transition-all"
+                        >
+                            {sortDirection === 'asc' ? (
+                                <>
+                                    <SortAsc className="w-4 h-4 text-teal-600" />
+                                    <span className="text-sm font-semibold">A - Z</span>
+                                </>
+                            ) : (
+                                <>
+                                    <SortDesc className="w-4 h-4 text-teal-600" />
+                                    <span className="text-sm font-semibold">Z - A</span>
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
-            </motion.div>
+            </div>
+
+            {/* La barre de filtrage alphabétique a été retirée pour simplifier l'interface comme demandé */}
 
             {loading && patients.length === 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

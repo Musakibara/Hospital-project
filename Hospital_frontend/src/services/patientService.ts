@@ -36,12 +36,19 @@ export interface PatientResponse {
 }
 
 export const patientService = {
-    async getPatients(page: number = 1, search: string = ''): Promise<PatientResponse> {
+    async getPatients(page: number = 1, search: string = '', sortBy: string = 'nom_patient', direction: string = 'asc'): Promise<PatientResponse> {
         const params = new URLSearchParams();
         params.append('page', page.toString());
+
+        // Ajout du terme de recherche si présent
         if (search) {
             params.append('search', search);
         }
+
+        // Paramètres de tri (A-Z ou Z-A par défaut sur le nom)
+        params.append('sort_by', sortBy);
+        params.append('direction', direction);
+
         const response = await api.get<PatientResponse>(`/patients?${params.toString()}`);
         return response.data;
     },

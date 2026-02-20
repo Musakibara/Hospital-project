@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Calendar, Activity, UserPlus, PlusCircle, ClipboardList, Stethoscope, ChevronRight } from 'lucide-react';
+import { Users, Calendar, Activity, ClipboardList, Stethoscope } from 'lucide-react';
 import { doctorService, Doctor } from '@/services/doctorService';
 import { patientService } from '@/services/patientService';
 import { appointmentService, Appointment } from '@/services/appointmentService';
@@ -27,22 +27,7 @@ const StatCard = ({ title, value, icon: Icon, color, link, description }: any) =
     </Link>
 );
 
-const QuickActionButton = ({ icon: Icon, label, description, color, link }: any) => (
-    <Link to={link}>
-        <Card className="border border-slate-100 shadow-sm hover:shadow-md transition-all group cursor-pointer overflow-hidden">
-            <CardContent className="p-4 flex items-center gap-4">
-                <div className={`p-3 rounded-lg ${color} text-white group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                    <p className="font-semibold text-slate-900 text-sm">{label}</p>
-                    <p className="text-xs text-slate-500">{description}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-slate-500 transition-colors" />
-            </CardContent>
-        </Card>
-    </Link>
-);
+// La section QuickActionButton a été retirée pour épurer le tableau de bord comme demandé
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -130,36 +115,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Quick Actions Section */}
-            <div>
-                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <PlusCircle className="w-5 h-5 text-teal-600" />
-                    Quick Actions
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <QuickActionButton
-                        icon={Users}
-                        label="New Patient"
-                        description="Register a new patient record"
-                        color="bg-blue-600"
-                        link="/patients"
-                    />
-                    <QuickActionButton
-                        icon={Calendar}
-                        label="New Appointment"
-                        description="Schedule a patient visit"
-                        color="bg-teal-600"
-                        link="/appointments"
-                    />
-                    <QuickActionButton
-                        icon={Stethoscope}
-                        label="New Consultation"
-                        description="Record a medical visit"
-                        color="bg-amber-600"
-                        link="/consultations"
-                    />
-                </div>
-            </div>
+            {/* La section Quick Actions a été supprimée pour un design plus clair et propre */}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
