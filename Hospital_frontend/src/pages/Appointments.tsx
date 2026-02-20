@@ -20,6 +20,7 @@ const Appointments = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [patientSearch, setPatientSearch] = useState('');
     const [isEditing, setIsEditing] = useState(false);
+    const [originalAppointment, setOriginalAppointment] = useState<Partial<Appointment>>({});
 
 
     // Filters
@@ -97,8 +98,20 @@ const Appointments = () => {
         e.preventDefault();
         try {
             if (isEditing && currentAppointment.id) {
-                await appointmentService.updateAppointment(currentAppointment.id, currentAppointment);
-                toast.success("Rendez-vous mis à jour");
+                // Compute diff
+                const updateData: any = {};
+                const fields: (keyof Appointment)[] = ['patient_id', 'medecin_id', 'date_heure', 'motif', 'statut', 'observation'];
+
+                fields.forEach(field => {
+                    if (currentAppointment[field] !== originalAppointment[field]) {
+                        updateData[field] = currentAppointment[field];
+                    }
+                });
+
+                if (Object.keys(updateData).length > 0) {
+                    await appointmentService.updateAppointment(currentAppointment.id, updateData);
+                    toast.success("Rendez-vous mis à jour");
+                }
             } else {
                 await appointmentService.createAppointment(currentAppointment as Appointment);
                 toast.success("Rendez-vous enregistré et email envoyé au patient");
@@ -106,6 +119,7 @@ const Appointments = () => {
             setIsModalOpen(false);
             fetchAppointments();
             setCurrentAppointment({ statut: 'prevu' });
+            setOriginalAppointment({});
             setIsEditing(false);
         } catch (error: any) {
             console.error(error);
@@ -114,7 +128,15 @@ const Appointments = () => {
     };
 
     const handleEditClick = (apt: Appointment) => {
-        setCurrentAppointment(apt);
+        const formattedApt = {
+            ...apt,
+            patient_id: apt.patient?.id,
+            medecin_id: apt.medecin?.id,
+            date_heure: apt.date_heure ? apt.date_heure.replace(' ', 'T').slice(0, 16) : ''
+        };
+        setCurrentAppointment(formattedApt);
+        setOriginalAppointment(formattedApt);
+        setPatientSearch(apt.patient?.nom_patient || '');
         setIsEditing(true);
         setIsModalOpen(true);
     };
@@ -323,16 +345,24 @@ const Appointments = () => {
                                 <Search className="h-4 w-4 text-teal-500 group-focus-within/search:scale-110 transition-transform" />
                             </div>
                             <Input
-                                placeholder="Start typing patient name to search..."
+                                placeholder={isEditing ? "Patient (Non-modifiable)" : "Start typing patient name to search..."}
                                 value={patientSearch}
                                 onChange={(e) => setPatientSearch(e.target.value)}
-                                className="pl-11 h-12 bg-slate-50 border-slate-200/80 rounded-2xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all font-medium"
+                                disabled={isEditing}
+                                className={cn(
+                                    "pl-11 h-12 bg-slate-50 border-slate-200/80 rounded-2xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all font-medium",
+                                    isEditing && "opacity-60 cursor-not-allowed bg-slate-100"
+                                )}
                             />
                         </div>
                         <div className="relative group/select">
                             <select
-                                className="flex h-12 w-full appearance-none rounded-2xl border border-slate-200/80 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900/20 transition-all cursor-pointer"
+                                className={cn(
+                                    "flex h-12 w-full appearance-none rounded-2xl border border-slate-200/80 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900/20 transition-all cursor-pointer",
+                                    isEditing && "opacity-60 cursor-not-allowed bg-slate-100"
+                                )}
                                 required
+                                disabled={isEditing}
                                 value={currentAppointment.patient_id || ''}
                                 onChange={(e) => {
                                     const val = e.target.value;
@@ -364,7 +394,14 @@ const Appointments = () => {
                         >
                             <option value="">Select a doctor...</option>
                             {doctors
-                                .filter(doc => doc.disponible || doc.id === currentAppointment.medecin_id)
+                                .filter(doc => {
+                                    const isAvailable = doc.disponible || doc.id === currentAppointment.medecin_id;
+                                    if (isEditing) {
+                                        const currentDoctor = doctors.find(d => d.id === currentAppointment.medecin_id);
+                                        return isAvailable && doc.specialite === currentDoctor?.specialite;
+                                    }
+                                    return isAvailable;
+                                })
                                 .map(doc => (
                                     <option key={doc.id} value={doc.id}>Dr. {doc.nom_medecin} — {doc.specialite}</option>
                                 ))}

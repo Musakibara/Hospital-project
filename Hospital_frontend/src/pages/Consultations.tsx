@@ -23,6 +23,7 @@ const Consultations = () => {
         diagnostic: '',
         traitement: '',
         symptomes: '',
+        maladie: '',
         observations: ''
     });
 
@@ -72,6 +73,7 @@ const Consultations = () => {
             diagnostic: '',
             traitement: '',
             symptomes: '',
+            maladie: '',
             observations: ''
         });
     };
@@ -82,8 +84,8 @@ const Consultations = () => {
 
         try {
             const visitData: any = {
-                patient_id: selectedAppointment.patient_id,
-                medecin_id: selectedAppointment.medecin_id,
+                patient_id: selectedAppointment.patient?.id,
+                medecin_id: selectedAppointment.medecin?.id,
                 rendez_vous_id: selectedAppointment.id,
                 date_visite: new Date().toISOString().split('T')[0], // Today
                 ...formData
@@ -218,15 +220,27 @@ const Consultations = () => {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-700">Diagnosis</label>
-                                            <Input
-                                                className="bg-slate-50 focus:bg-white"
-                                                placeholder="Confirmed diagnosis..."
-                                                value={formData.diagnostic || ''}
-                                                onChange={e => setFormData({ ...formData, diagnostic: e.target.value })}
-                                                required
-                                            />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-slate-700">Diagnosis</label>
+                                                <Input
+                                                    className="bg-slate-50 focus:bg-white"
+                                                    placeholder="Confirmed diagnosis..."
+                                                    value={formData.diagnostic || ''}
+                                                    onChange={e => setFormData({ ...formData, diagnostic: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-slate-700">Maladie / Pathologie</label>
+                                                <Input
+                                                    className="bg-slate-50 focus:bg-white"
+                                                    placeholder="Nom de la maladie ou condition..."
+                                                    value={formData.maladie || ''}
+                                                    onChange={e => setFormData({ ...formData, maladie: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
