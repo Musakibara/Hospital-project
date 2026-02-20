@@ -34,11 +34,18 @@ class RendezVousController extends Controller
      */
     public function index(Request $request)
     {
-        $query = RendezVous::with(['patient', 'medecin']);
+        $query = RendezVous::with(['patient', 'medecin', 'visiteMedicale']);
 
-        // Filter by Status
+        // Filter by Status (Support string, array or comma-separated)
         if ($request->has('statut')) {
-            $query->byStatut($request->statut);
+            $statut = $request->statut;
+            if (is_array($statut)) {
+                $query->whereIn('statut', $statut);
+            } elseif (str_contains($statut, ',')) {
+                $query->whereIn('statut', explode(',', $statut));
+            } else {
+                $query->byStatut($statut);
+            }
         }
 
         // Filter by Date Range
@@ -56,7 +63,10 @@ class RendezVousController extends Controller
             $query->byPatient($request->patient_id);
         }
 
-        $rendezVous = $query->orderBy('date_heure', 'desc')->paginate(20);
+        $order = $request->get('order', 'asc'); // Par défaut asc pour la file d'attente
+        $perPage = $request->get('per_page', 20);
+        
+        $rendezVous = $query->orderBy('date_heure', $order)->paginate($perPage);
         return RendezVousResource::collection($rendezVous);
     }
 

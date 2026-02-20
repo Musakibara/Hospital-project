@@ -16,8 +16,22 @@ class PatientController extends Controller
     {
         $query = Patient::query();
 
+        // Support de recherche textuelle globale (Nom ou Numéro unique)
         if ($request->has('search')) {
             $query->search($request->search);
+        }
+
+
+        // Gestion du tri (Par défaut : nom_patient en ordre croissant)
+        $sortBy = $request->get('sort_by', 'nom_patient');
+        $direction = $request->get('direction', 'asc');
+        
+        // Sécurité pour éviter les colonnes inexistantes ou directions invalides
+        $allowedSortColumns = ['nom_patient', 'created_at', 'numero_unique'];
+        if (in_array($sortBy, $allowedSortColumns) && in_array($direction, ['asc', 'desc'])) {
+            $query->orderBy($sortBy, $direction);
+        } else {
+            $query->orderBy('nom_patient', 'asc');
         }
 
         $patients = $query->paginate(20);

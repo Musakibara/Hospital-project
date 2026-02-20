@@ -60,12 +60,14 @@ class Patient extends Model
         return $this->date_naissance->age;
     }
 
-    /**
-     * Scope a query to search by name.
+   /**
+     * Scope a query to search by name or unique number.
      */
     public function scopeSearch($query, $search)
     {
-        return $query->where('nom_patient', 'like', "%{$search}%")
-                    ->orWhere('numero_unique', 'like', "%{$search}%");
+        return $query->where(function ($q) use ($search) {
+            $q->where('nom_patient', 'like', "%{$search}%")
+              ->orWhere('numero_unique', 'like', "%{$search}%");
+        });
     }
 }
