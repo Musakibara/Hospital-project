@@ -16,6 +16,9 @@ export interface Appointment {
     patient?: Patient;
     medecin?: Doctor;
     medecin_remplacant?: Doctor;
+    visite_medicale?: any;
+    visiteMedicale?: any;
+    has_visite?: boolean;
 }
 
 export interface AppointmentResponse {
@@ -30,6 +33,8 @@ export interface AppointmentFilters {
     patient_id?: number;
     statut?: string;
     page?: number;
+    per_page?: number;
+    order?: 'asc' | 'desc';
 }
 
 export const appointmentService = {
@@ -40,6 +45,8 @@ export const appointmentService = {
         if (filters.patient_id) params.append('patient_id', filters.patient_id.toString());
         if (filters.statut) params.append('statut', filters.statut);
         if (filters.page) params.append('page', filters.page.toString());
+        if (filters.per_page) params.append('per_page', filters.per_page.toString());
+        if (filters.order) params.append('order', filters.order);
 
         const response = await api.get<AppointmentResponse>(`/rendez-vous?${params.toString()}`);
         return response.data;

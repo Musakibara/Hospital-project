@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patientService, Patient } from '@/services/patientService';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,49 +8,74 @@ import { Search, Phone, Plus, Edit, Trash2, MapPin, Calendar, FileText, SortAsc,
 import { Modal } from '@/components/ui/modal';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
-
+/**
+ * Page de gestion des patients optimisée.
+ * Utilise TanStack Query pour le cache et la déduplication des requêtes.
+ * Utilise useCallback pour éviter les re-renders inutiles des composants enfants.
+ */
 const Patients = () => {
-    const [patients, setPatients] = useState<Patient[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    // État pour la modale
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentPatient, setCurrentPatient] = useState<Partial<Patient>>({});
     const [isEditing, setIsEditing] = useState(false);
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc'); // Direction du tri (A-Z ou Z-A)
 
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            fetchPatients(currentPage, searchTerm, sortDirection);
-        }, 500);
+    // Requête pour récupérer les patients avec cache (5 min par défaut dans main.tsx)
+    const { data: response, isLoading, isPlaceholderData } = useQuery({
+        queryKey: ['patients', currentPage, searchTerm, sortDirection],
+        queryFn: () => patientService.getPatients(currentPage, searchTerm, 'nom_patient', sortDirection),
+        placeholderData: (previousData) => previousData, // Garder les anciennes données pendant le chargement (UX fluide)
+    });
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, currentPage, sortDirection]);
+    const patients = useMemo(() => response?.data || [], [response]);
+    const totalPages = response?.meta.last_page || 1;
 
-    const fetchPatients = async (page: number, search: string, direction: string = 'asc') => {
-        setLoading(true);
-        try {
-            // Appel au service avec les paramètres de pagination, recherche et direction de tri
-            const response = await patientService.getPatients(page, search, 'nom_patient', direction);
-            setPatients(response.data);
-            setTotalPages(response.meta.last_page);
-        } catch (error) {
-            console.error("Failed to fetch patients", error);
-        } finally {
-            setLoading(false);
+    // Mutations pour les actions (Create/Update/Delete)
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => patientService.deletePatient(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['patients'] });
+            toast.success("Patient supprimé avec succès");
+        },
+        onError: () => toast.error("Erreur lors de la suppression")
+    });
+
+    const saveMutation = useMutation({
+        mutationFn: (patient: Partial<Patient>) => {
+            if (isEditing && patient.id) {
+                return patientService.updatePatient(patient.id, patient);
+            }
+            return patientService.createPatient(patient as Patient);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['patients'] });
+            setIsModalOpen(false);
+            toast.success(isEditing ? "Modifications enregistrées" : "Patient enregistré");
+        },
+        onError: (error: any) => {
+            toast.error(`Erreur: ${error.response?.data?.message || error.message}`);
         }
-    };
+    });
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handlers mémoïsés
+    const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
-        setCurrentPage(1); // Reset to first page on search
-    };
+        setCurrentPage(1);
+    }, []);
 
-    const handleAddClick = () => {
+    const toggleSort = useCallback(() => {
+        setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    }, []);
+
+    const handleAddClick = useCallback(() => {
         setCurrentPatient({
-            numero_unique: `PAT-${Math.floor(Math.random() * 10000)}`, // Auto-generate for now
+            numero_unique: `PAT-${Math.floor(Math.random() * 10000)}`,
             nom_patient: '',
             date_naissance: '',
             sexe: 'Masculin',
@@ -61,52 +87,35 @@ const Patients = () => {
         });
         setIsEditing(false);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleEditClick = (patient: Patient) => {
+    const handleEditClick = useCallback((patient: Patient) => {
         setCurrentPatient(patient);
         setIsEditing(true);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleDeleteClick = async (id: number) => {
-        if (confirm('Are you sure you want to delete this patient?')) {
-            try {
-                await patientService.deletePatient(id);
-                fetchPatients(currentPage, searchTerm, sortDirection);
-            } catch (error) {
-                console.error("Failed to delete patient", error);
-                alert("Failed to delete patient. Please try again.");
-            }
+    const handleDeleteClick = useCallback((id: number) => {
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce patient ?')) {
+            deleteMutation.mutate(id);
         }
-    };
+    }, [deleteMutation]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            if (isEditing && currentPatient.id) {
-                await patientService.updatePatient(currentPatient.id, currentPatient);
-            } else {
-                await patientService.createPatient(currentPatient as Patient);
-            }
-            setIsModalOpen(false);
-            fetchPatients(currentPage, searchTerm, sortDirection);
-        } catch (error: any) {
-            console.error("Failed to save patient", error);
-            alert(`Failed to save: ${error.response?.data?.message || error.message}`);
-        }
-    };
+        saveMutation.mutate(currentPatient);
+    }, [saveMutation, currentPatient]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Patients</h1>
-                    <p className="text-slate-500 mt-1">Manage patient records and medical history.</p>
+                    <p className="text-slate-500 mt-1">Gérez les dossiers patients et l'historique médical.</p>
                 </div>
                 <Button onClick={handleAddClick} className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20">
                     <Plus className="w-4 h-4 mr-2" />
-                    Register Patient
+                    Enregistrer un Patient
                 </Button>
             </div>
 
@@ -122,22 +131,24 @@ const Patients = () => {
                                 <Search className="w-5 h-5 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
                             </div>
                             <Input
-                                placeholder="Search by name, email or phone..."
+                                placeholder="Rechercher par nom, email ou téléphone..."
                                 value={searchTerm}
                                 onChange={handleSearch}
                                 className="border-none shadow-none focus-visible:ring-0 h-10 px-0 text-slate-700 placeholder:text-slate-400 font-medium bg-transparent"
                             />
                             <div className="pr-4">
-                                <div className="w-2 h-2 rounded-full bg-teal-500/20 group-focus-within/search:bg-teal-500 group-focus-within/search:animate-pulse" />
+                                <div className={cn(
+                                    "w-2 h-2 rounded-full transition-all",
+                                    isLoading ? "bg-teal-500 animate-pulse" : "bg-teal-500/20"
+                                )} />
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Bouton de tri A-Z / Z-A */}
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
-                            onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                            onClick={toggleSort}
                             className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700 h-10 rounded-xl px-4 flex items-center gap-2 shadow-sm transition-all"
                         >
                             {sortDirection === 'asc' ? (
@@ -156,27 +167,28 @@ const Patients = () => {
                 </div>
             </div>
 
-            {/* La barre de filtrage alphabétique a été retirée pour simplifier l'interface comme demandé */}
-
-            {loading && patients.length === 0 ? (
+            {isLoading && !isPlaceholderData ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
                         <Card key={i} className="animate-pulse h-64 bg-slate-100 border-none rounded-xl" />
                     ))}
                 </div>
             ) : patients.length === 0 ? (
                 <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
                     <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-slate-900">No patients found</h3>
-                    <p className="text-slate-500">Try adjusting your search or add a new patient.</p>
+                    <h3 className="text-lg font-medium text-slate-900">Aucun patient trouvé</h3>
+                    <p className="text-slate-500">Essayez d'ajuster votre recherche ou ajoutez un nouveau patient.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {patients.map((patient) => (
+                <div className={cn(
+                    "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-200",
+                    isPlaceholderData ? "opacity-50" : "opacity-100"
+                )}>
+                    {patients.map((patient: Patient) => (
                         <Card key={patient.id} className="hover:shadow-lg transition-all duration-300 group border-slate-200 hover:border-teal-200 rounded-xl overflow-hidden">
                             <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4 bg-slate-50/50">
                                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-md group-hover:scale-105 transition-transform">
-                                    {patient.nom_patient.substring(0, 2).toUpperCase()}
+                                    {(patient.nom_patient || '??').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <CardTitle className="text-lg font-bold text-slate-900 truncate">
@@ -191,7 +203,6 @@ const Patients = () => {
                                             {patient.sexe}
                                         </span>
                                     </div>
-
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-6 space-y-3">
@@ -211,11 +222,11 @@ const Patients = () => {
                             <CardFooter className="pt-2 gap-2">
                                 <Button variant="outline" size="sm" className="flex-1 hover:bg-slate-50 hover:text-teal-600 hover:border-teal-200" onClick={() => handleEditClick(patient)}>
                                     <Edit className="w-4 h-4 mr-2" />
-                                    Edit
+                                    Modifier
                                 </Button>
                                 <Button variant="outline" size="sm" className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => patient.id && handleDeleteClick(patient.id)}>
                                     <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete
+                                    Supprimer
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -223,25 +234,24 @@ const Patients = () => {
                 </div>
             )}
 
-            {/* Pagination Controls */}
             {totalPages > 1 && (
                 <div className="flex justify-center gap-2 mt-6">
                     <Button
                         variant="outline"
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
+                        disabled={currentPage === 1 || isLoading}
                     >
-                        Previous
+                        Précédent
                     </Button>
                     <span className="flex items-center px-4 text-sm text-slate-600">
-                        Page {currentPage} of {totalPages}
+                        Page {currentPage} sur {totalPages}
                     </span>
                     <Button
                         variant="outline"
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
+                        disabled={currentPage === totalPages || isLoading}
                     >
-                        Next
+                        Suivant
                     </Button>
                 </div>
             )}
@@ -249,22 +259,22 @@ const Patients = () => {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={isEditing ? 'Edit Patient' : 'Register New Patient'}
+                title={isEditing ? 'Modifier le Patient' : 'Enregistrer un Nouveau Patient'}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Full Name</label>
+                        <label className="text-sm font-medium text-slate-700">Nom Complet</label>
                         <Input
                             required
                             value={currentPatient.nom_patient || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, nom_patient: e.target.value })}
-                            placeholder="John Doe"
+                            placeholder="ex: Jean Dupont"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Date of Birth</label>
+                            <label className="text-sm font-medium text-slate-700">Date de Naissance</label>
                             <Input
                                 type="date"
                                 required
@@ -273,7 +283,7 @@ const Patients = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Gender</label>
+                            <label className="text-sm font-medium text-slate-700">Sexe</label>
                             <select
                                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
                                 value={currentPatient.sexe || 'Masculin'}
@@ -288,12 +298,12 @@ const Patients = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Phone</label>
+                            <label className="text-sm font-medium text-slate-700">Téléphone</label>
                             <Input
                                 required
                                 value={currentPatient.contact_patient || ''}
                                 onChange={(e) => setCurrentPatient({ ...currentPatient, contact_patient: e.target.value })}
-                                placeholder="+1 234 567 890"
+                                placeholder="+221 ..."
                             />
                         </div>
                         <div className="space-y-2">
@@ -302,34 +312,34 @@ const Patients = () => {
                                 type="email"
                                 value={currentPatient.email_patient || ''}
                                 onChange={(e) => setCurrentPatient({ ...currentPatient, email_patient: e.target.value })}
-                                placeholder="john@example.com"
+                                placeholder="patient@exemple.com"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Address</label>
+                        <label className="text-sm font-medium text-slate-700">Adresse</label>
                         <Input
                             required
                             value={currentPatient.adresse || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, adresse: e.target.value })}
-                            placeholder="123 Main St, City"
+                            placeholder="Adresse complète"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Medical History (Antecedents)</label>
+                        <label className="text-sm font-medium text-slate-700">Antécédents Médicaux</label>
                         <textarea
                             className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
                             value={currentPatient.antecedents_medicaux || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, antecedents_medicaux: e.target.value })}
-                            placeholder="Allergies, chronic conditions, etc."
+                            placeholder="Allergies, conditions chroniques, etc."
                         />
                     </div>
 
                     {!isEditing && (
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Unique ID (Auto-generated)</label>
+                            <label className="text-sm font-medium text-slate-700">ID Unique (Généré)</label>
                             <Input
                                 disabled
                                 value={currentPatient.numero_unique || ''}
@@ -339,10 +349,14 @@ const Patients = () => {
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
-                            Cancel
+                            Annuler
                         </Button>
-                        <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white">
-                            {isEditing ? 'Save Changes' : 'Register Patient'}
+                        <Button
+                            type="submit"
+                            className="bg-teal-600 hover:bg-teal-700 text-white"
+                            disabled={saveMutation.isPending}
+                        >
+                            {saveMutation.isPending ? "Traitement..." : (isEditing ? 'Enregistrer' : 'Enregistrer le Patient')}
                         </Button>
                     </div>
                 </form>

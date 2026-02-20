@@ -1,25 +1,35 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-import DashboardLayout from './layouts/DashboardLayout';
-import Dashboard from './pages/Dashboard';
-import Doctors from './pages/Doctors';
-import Patients from './pages/Patients';
-import Notifications from './pages/Notifications';
-import Appointments from './pages/Appointments';
+import { Toaster } from 'react-hot-toast';
 
-import Consultations from './pages/Consultations';
+// Routes publiques
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+
+// Mise en page et pages protégées
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Doctors = lazy(() => import('./pages/Doctors'));
+const Patients = lazy(() => import('./pages/Patients'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Appointments = lazy(() => import('./pages/Appointments'));
+const Consultations = lazy(() => import('./pages/Consultations'));
+
+// Composant de chargement (Fallback pour Suspense)
+// Optimisation UX : Utilisation d'un spinner simple en attendant le chargement du chunk JS
+const PageLoader = () => (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+    </div>
+);
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactElement, allowedRoles?: string[] }) => {
     const { isAuthenticated, isLoading, user } = useAuth();
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (!isAuthenticated) {
@@ -27,23 +37,18 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactEleme
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role || '')) {
-        // Rediriger vers le dashboard si le rôle n'est pas autorisé
         return <Navigate to="/dashboard" replace />;
     }
 
     return children;
 };
 
-// Public Route Component (Redirects to dashboard if already authenticated)
+// Public Route Component
 const PublicRoute = ({ children }: { children: React.ReactElement }) => {
     const { isAuthenticated, isLoading } = useAuth();
 
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-            </div>
-        );
+        return <PageLoader />;
     }
 
     if (isAuthenticated) {
@@ -53,44 +58,43 @@ const PublicRoute = ({ children }: { children: React.ReactElement }) => {
     return children;
 };
 
-import { Toaster } from 'react-hot-toast';
-import Signup from './pages/Signup';
-
 function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
                 <Toaster position="top-right" />
-                <Routes>
-                    <Route path="/login" element={
-                        <PublicRoute>
-                            <Login />
-                        </PublicRoute>
-                    } />
-                    <Route path="/signup" element={
-                        <PublicRoute>
-                            <Signup />
-                        </PublicRoute>
-                    } />
-
-                    <Route path="/" element={
-                        <ProtectedRoute>
-                            <DashboardLayout />
-                        </ProtectedRoute>
-                    }>
-                        <Route index element={<Navigate to="/dashboard" replace />} />
-                        <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="doctors" element={
-                            <ProtectedRoute allowedRoles={['admin']}>
-                                <Doctors />
-                            </ProtectedRoute>
+                <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                        <Route path="/login" element={
+                            <PublicRoute>
+                                <Login />
+                            </PublicRoute>
                         } />
-                        <Route path="patients" element={<Patients />} />
-                        <Route path="notifications" element={<Notifications />} />
-                        <Route path="appointments" element={<Appointments />} />
-                        <Route path="consultations" element={<Consultations />} />
-                    </Route>
-                </Routes>
+                        <Route path="/signup" element={
+                            <PublicRoute>
+                                <Signup />
+                            </PublicRoute>
+                        } />
+
+                        <Route path="/" element={
+                            <ProtectedRoute>
+                                <DashboardLayout />
+                            </ProtectedRoute>
+                        }>
+                            <Route index element={<Navigate to="/dashboard" replace />} />
+                            <Route path="dashboard" element={<Dashboard />} />
+                            <Route path="doctors" element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <Doctors />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="patients" element={<Patients />} />
+                            <Route path="notifications" element={<Notifications />} />
+                            <Route path="appointments" element={<Appointments />} />
+                            <Route path="consultations" element={<Consultations />} />
+                        </Route>
+                    </Routes>
+                </Suspense>
             </AuthProvider>
         </BrowserRouter>
     );
