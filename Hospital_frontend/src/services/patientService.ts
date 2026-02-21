@@ -11,6 +11,8 @@ export interface Patient {
     adresse: string;
     antecedents_medicaux?: string;
     profession?: string;
+    rendez_vous?: any[];
+    visites_medicales?: any[];
     created_at?: string;
     updated_at?: string;
 }

@@ -34,7 +34,11 @@ export interface MedicalVisitResponse {
 export interface MedicalVisitFilters {
     patient_id?: number;
     medecin_id?: number;
+    date_start?: string;
+    date_end?: string;
+    search?: string;
     page?: number;
+    per_page?: number;
 }
 
 export const consultationService = {
@@ -42,7 +46,11 @@ export const consultationService = {
         const params = new URLSearchParams();
         if (filters.patient_id) params.append('patient_id', filters.patient_id.toString());
         if (filters.medecin_id) params.append('medecin_id', filters.medecin_id.toString());
+        if (filters.date_start) params.append('date_start', filters.date_start);
+        if (filters.date_end) params.append('date_end', filters.date_end);
+        if (filters.search) params.append('search', filters.search);
         if (filters.page) params.append('page', filters.page.toString());
+        if (filters.per_page) params.append('per_page', filters.per_page.toString());
 
         const response = await api.get<MedicalVisitResponse>(`/visites-medicales?${params.toString()}`);
         return response.data;

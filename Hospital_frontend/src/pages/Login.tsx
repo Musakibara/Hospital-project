@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Lock, Mail, Loader2, HeartPulse } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -30,14 +31,19 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen grid lg:grid-cols-2 relative overflow-hidden bg-slate-50">
-            {/* Background Decorations */}
-            <div className="absolute top-[-10%] left-[-10%] w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] bg-teal-400/20 rounded-full blur-3xl" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] bg-blue-400/20 rounded-full blur-3xl" />
+        <div className="min-h-screen grid lg:grid-cols-2 relative overflow-hidden bg-background transition-colors duration-300">
+            {/* Theme Toggle Flottant */}
+            <div className="absolute top-4 right-4 z-50">
+                <ThemeToggle />
+            </div>
+
+            {/* Background Decorations - Subtles in light mode */}
+            <div className="absolute top-[-10%] left-[-10%] w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] bg-teal-400/5 dark:bg-teal-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] bg-blue-400/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
 
             {/* Left Side - Visual */}
-            <div className="hidden lg:flex flex-col justify-center items-center relative z-10 p-12 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=2800&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay" />
+            <div className="hidden lg:flex flex-col justify-center items-center relative z-10 p-12 bg-slate-900 dark:from-black dark:to-slate-950 text-white">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1538108149393-fbbd81895907?q=80&w=2800&auto=format&fit=crop')] bg-cover bg-center opacity-10 dark:opacity-10" />
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -64,16 +70,16 @@ const Login = () => {
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    <Card className="border-slate-200/60 shadow-xl bg-white/80 backdrop-blur-xl">
+                    <Card className="border-border shadow-xl bg-card dark:bg-card/80 dark:backdrop-blur-xl">
                         <CardHeader className="space-y-1">
-                            <CardTitle className="text-2xl font-bold text-slate-900">Welcome back</CardTitle>
+                            <CardTitle className="text-2xl font-bold text-foreground">Welcome back</CardTitle>
                             <CardDescription>Enter your credentials to access your account</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="email"
                                             placeholder="name@hospital.com"
@@ -86,7 +92,7 @@ const Login = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="password"
                                             placeholder="••••••••"
@@ -98,8 +104,8 @@ const Login = () => {
                                     </div>
                                 </div>
                                 {error && (
-                                    <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md border border-red-100 flex items-center gap-2">
-                                        <span className="w-1 h-1 rounded-full bg-red-500" />
+                                    <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20 flex items-center gap-2">
+                                        <span className="w-1 h-1 rounded-full bg-destructive" />
                                         {error}
                                     </div>
                                 )}
@@ -120,10 +126,10 @@ const Login = () => {
                             </form>
                         </CardContent>
                         <CardFooter className="justify-center flex-col space-y-2">
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-muted-foreground">
                                 Protected by secure 256-bit encryption
                             </p>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-muted-foreground">
                                 Don't have an account?{' '}
                                 <Link to="/signup" className="text-teal-600 hover:text-teal-500 font-medium transition-colors">
                                     Sign Up

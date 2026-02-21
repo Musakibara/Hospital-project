@@ -18,6 +18,7 @@ export interface Appointment {
     medecin_remplacant?: Doctor;
     visite_medicale?: any;
     visiteMedicale?: any;
+    visite_id?: number | null;
     has_visite?: boolean;
 }
 

@@ -4,7 +4,12 @@ export interface User {
     id: number;
     name: string;
     email: string;
-    role?: string; // adjust based on actual API response
+    role?: string;
+    medecin?: {
+        id: number;
+        nom_medecin: string;
+        specialite: string;
+    };
 }
 
 export interface LoginResponse {

@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 
 // Routes publiques
@@ -15,6 +16,9 @@ const Patients = lazy(() => import('./pages/Patients'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Appointments = lazy(() => import('./pages/Appointments'));
 const Consultations = lazy(() => import('./pages/Consultations'));
+const PatientRecord = lazy(() => import('./pages/PatientRecord'));
+const MedicalConsultation = lazy(() => import('./pages/MedicalConsultation'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Composant de chargement (Fallback pour Suspense)
 // Optimisation UX : Utilisation d'un spinner simple en attendant le chargement du chunk JS
@@ -61,41 +65,50 @@ const PublicRoute = ({ children }: { children: React.ReactElement }) => {
 function App() {
     return (
         <BrowserRouter>
-            <AuthProvider>
-                <Toaster position="top-right" />
-                <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                        <Route path="/login" element={
-                            <PublicRoute>
-                                <Login />
-                            </PublicRoute>
-                        } />
-                        <Route path="/signup" element={
-                            <PublicRoute>
-                                <Signup />
-                            </PublicRoute>
-                        } />
-
-                        <Route path="/" element={
-                            <ProtectedRoute>
-                                <DashboardLayout />
-                            </ProtectedRoute>
-                        }>
-                            <Route index element={<Navigate to="/dashboard" replace />} />
-                            <Route path="dashboard" element={<Dashboard />} />
-                            <Route path="doctors" element={
-                                <ProtectedRoute allowedRoles={['admin']}>
-                                    <Doctors />
-                                </ProtectedRoute>
+            <ThemeProvider defaultTheme="light" storageKey="hospital-theme">
+                <AuthProvider>
+                    <Toaster position="top-right" />
+                    <Suspense fallback={<PageLoader />}>
+                        <Routes>
+                            <Route path="/login" element={
+                                <PublicRoute>
+                                    <Login />
+                                </PublicRoute>
                             } />
-                            <Route path="patients" element={<Patients />} />
-                            <Route path="notifications" element={<Notifications />} />
-                            <Route path="appointments" element={<Appointments />} />
-                            <Route path="consultations" element={<Consultations />} />
-                        </Route>
-                    </Routes>
-                </Suspense>
-            </AuthProvider>
+                            <Route path="/signup" element={
+                                <PublicRoute>
+                                    <Signup />
+                                </PublicRoute>
+                            } />
+
+                            <Route path="/" element={
+                                <ProtectedRoute>
+                                    <DashboardLayout />
+                                </ProtectedRoute>
+                            }>
+                                <Route index element={<Navigate to="/dashboard" replace />} />
+                                <Route path="dashboard" element={<Dashboard />} />
+                                <Route path="doctors" element={
+                                    <ProtectedRoute allowedRoles={['admin']}>
+                                        <Doctors />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="patients" element={<Patients />} />
+                                <Route path="patients/:id" element={<PatientRecord />} />
+                                <Route path="patients/:id/consultation" element={
+                                    <ProtectedRoute allowedRoles={['medecin']}>
+                                        <MedicalConsultation />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="notifications" element={<Notifications />} />
+                                <Route path="appointments" element={<Appointments />} />
+                                <Route path="consultations" element={<Consultations />} />
+                            </Route>
+                            <Route path="*" element={<NotFound />} />
+                        </Routes>
+                    </Suspense>
+                </AuthProvider>
+            </ThemeProvider>
         </BrowserRouter>
     );
 }

@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { notificationService, Notification } from '@/services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const SidebarItem = ({ icon: Icon, label, href, active }: any) => (
     <Link
@@ -27,7 +28,7 @@ const SidebarItem = ({ icon: Icon, label, href, active }: any) => (
             "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative overflow-hidden",
             active
                 ? "bg-teal-500/10 text-teal-700 font-medium"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
         )}
     >
         {active && (
@@ -36,7 +37,7 @@ const SidebarItem = ({ icon: Icon, label, href, active }: any) => (
                 className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500 rounded-r-full"
             />
         )}
-        <Icon className={cn("w-5 h-5", active ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600")} />
+        <Icon className={cn("w-5 h-5", active ? "text-teal-600" : "text-muted-foreground group-hover:text-foreground")} />
         <span>{label}</span>
     </Link>
 );
@@ -98,11 +99,11 @@ const DashboardLayout = () => {
     ].filter(item => !item.roles || (user && item.roles.includes(user.role || '')));
 
     return (
-        <div className="min-h-screen bg-slate-50/50 flex">
+        <div className="min-h-screen bg-background dark:bg-slate-950 flex transition-colors duration-300">
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200 transition-transform duration-300 lg:static",
+                    "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 transition-transform duration-300 lg:static",
                     isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
             >
@@ -112,7 +113,7 @@ const DashboardLayout = () => {
                             <Stethoscope className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-slate-900 text-lg leading-tight">MedAdmin</h1>
+                            <h1 className="font-bold text-foreground text-lg leading-tight">MedAdmin</h1>
                             <p className="text-xs text-slate-500">Hospital System</p>
                         </div>
                     </div>
@@ -122,19 +123,19 @@ const DashboardLayout = () => {
                             <SidebarItem
                                 key={item.href}
                                 {...item}
-                                active={location.pathname === item.href}
+                                active={location.pathname === item.href || (item.href !== '/dashboard' && location.pathname.startsWith(item.href))}
                             />
                         ))}
                     </nav>
 
-                    <div className="pt-4 border-t border-slate-100">
-                        <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg bg-slate-50">
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                             <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
                                 {user?.name?.[0] || 'U'}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-900 truncate">{user?.name || 'User'}</p>
-                                <p className="text-xs text-slate-500 truncate">{user?.email || 'admin@hospital.com'}</p>
+                                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'User'}</p>
+                                <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@hospital.com'}</p>
                             </div>
                         </div>
                         <Button
@@ -152,7 +153,7 @@ const DashboardLayout = () => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
                 {/* Top Header */}
-                <header className="h-14 sm:h-16 bg-white/50 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 px-3 sm:px-6 flex items-center justify-between">
+                <header className="h-14 sm:h-16 bg-background dark:bg-slate-900 sticky top-0 z-40 px-3 sm:px-6 flex items-center justify-between transition-colors border-b border-border">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -168,6 +169,7 @@ const DashboardLayout = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 relative">
+                        <ThemeToggle />
                         <Button
                             variant="ghost"
                             size="icon"
@@ -188,10 +190,10 @@ const DashboardLayout = () => {
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden"
+                                        className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-card rounded-xl shadow-2xl border border-border z-50 overflow-hidden"
                                     >
-                                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                            <h3 className="font-bold text-slate-900">Notifications</h3>
+                                        <div className="p-4 border-b border-border/50 flex items-center justify-between bg-muted/30">
+                                            <h3 className="font-bold text-foreground">Notifications</h3>
                                             <Button variant="ghost" size="sm" className="text-xs text-teal-600 hover:text-teal-700" onClick={handleMarkAllRead}>
                                                 Mark all as read
                                             </Button>
@@ -199,8 +201,8 @@ const DashboardLayout = () => {
                                         <div className="max-h-[400px] overflow-auto">
                                             {notifications.filter(n => !n.read_at).length === 0 ? (
                                                 <div className="p-8 text-center">
-                                                    <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                                                    <p className="text-sm text-slate-400">Pas de nouvelles notifications</p>
+                                                    <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                                                    <p className="text-sm text-muted-foreground">Pas de nouvelles notifications</p>
                                                 </div>
                                             ) : (
                                                 notifications
@@ -209,27 +211,30 @@ const DashboardLayout = () => {
                                                     .map((notif) => (
                                                         <div
                                                             key={notif.id}
-                                                            className="p-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors flex gap-3 group relative bg-teal-50/30"
+                                                            className={cn(
+                                                                "p-4 border-b border-border/20 transition-colors flex gap-3 group relative",
+                                                                !notif.read_at ? "bg-teal-50/30 dark:bg-teal-900/10" : "hover:bg-muted/30"
+                                                            )}
                                                             onClick={() => handleMarkRead(notif.id)}
                                                         >
                                                             <div className={cn(
                                                                 "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center",
-                                                                notif.type === 'success' ? "bg-green-100 text-green-600" :
-                                                                    notif.type === 'warning' ? "bg-amber-100 text-amber-600" :
-                                                                        "bg-blue-100 text-blue-600"
+                                                                notif.type === 'success' ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" :
+                                                                    notif.type === 'warning' ? "bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400" :
+                                                                        "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
                                                             )}>
                                                                 {notif.type === 'success' ? <Check className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-sm text-slate-900 font-medium leading-snug">
+                                                                <p className="text-sm text-foreground font-medium leading-snug">
                                                                     {notif.message}
                                                                 </p>
                                                                 <div className="flex items-center gap-2 mt-1">
-                                                                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                                                                         {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                                                                     </span>
-                                                                    <span className="text-[10px] text-slate-300">•</span>
-                                                                    <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                                                    <span className="text-[10px] text-muted-foreground/50">•</span>
+                                                                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                                                         <UserIcon className="w-3 h-3" />
                                                                         {notif.user?.name || 'System'}
                                                                     </span>
@@ -240,8 +245,8 @@ const DashboardLayout = () => {
                                                     ))
                                             )}
                                         </div>
-                                        <div className="p-3 bg-slate-50/50 border-t border-slate-100 text-center">
-                                            <Link to="/notifications" className="text-xs font-semibold text-slate-500 hover:text-slate-900">
+                                        <div className="p-3 bg-muted/30 border-t border-border/50 text-center">
+                                            <Link to="/notifications" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
                                                 View all activity
                                             </Link>
                                         </div>

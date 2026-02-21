@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patientService, Patient } from '@/services/patientService';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,8 +19,15 @@ import { toast } from 'react-hot-toast';
 const Patients = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    // Debounce de 300ms sur la recherche pour éviter les requêtes excessives
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
     // État pour la modale
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,8 +36,8 @@ const Patients = () => {
 
     // Requête pour récupérer les patients avec cache (5 min par défaut dans main.tsx)
     const { data: response, isLoading, isPlaceholderData } = useQuery({
-        queryKey: ['patients', currentPage, searchTerm, sortDirection],
-        queryFn: () => patientService.getPatients(currentPage, searchTerm, 'nom_patient', sortDirection),
+        queryKey: ['patients', currentPage, debouncedSearch, sortDirection],
+        queryFn: () => patientService.getPatients(currentPage, debouncedSearch, 'nom_patient', sortDirection),
         placeholderData: (previousData) => previousData, // Garder les anciennes données pendant le chargement (UX fluide)
     });
 
@@ -110,7 +118,7 @@ const Patients = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Patients</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Patients</h1>
                     <p className="text-slate-500 mt-1">Gérez les dossiers patients et l'historique médical.</p>
                 </div>
                 <Button onClick={handleAddClick} className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20">
@@ -126,7 +134,7 @@ const Patients = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="relative group/search max-w-md w-full"
                     >
-                        <div className="relative flex items-center bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md focus-within:shadow-lg focus-within:ring-4 focus-within:ring-teal-500/5 focus-within:border-teal-500/30">
+                        <div className="relative flex items-center bg-card rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 hover:shadow-md focus-within:shadow-lg focus-within:ring-4 focus-within:ring-teal-500/5 focus-within:border-teal-500/30">
                             <div className="pl-4 pr-2">
                                 <Search className="w-5 h-5 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
                             </div>
@@ -134,7 +142,7 @@ const Patients = () => {
                                 placeholder="Rechercher par nom, email ou téléphone..."
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                className="border-none shadow-none focus-visible:ring-0 h-10 px-0 text-slate-700 placeholder:text-slate-400 font-medium bg-transparent"
+                                className="border-none shadow-none focus-visible:ring-0 h-10 px-0 text-foreground placeholder:text-slate-400 font-medium bg-transparent"
                             />
                             <div className="pr-4">
                                 <div className={cn(
@@ -149,7 +157,7 @@ const Patients = () => {
                         <Button
                             variant="outline"
                             onClick={toggleSort}
-                            className="bg-white border-slate-200 hover:bg-slate-50 text-slate-700 h-10 rounded-xl px-4 flex items-center gap-2 shadow-sm transition-all"
+                            className="bg-card border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-foreground h-10 rounded-xl px-4 flex items-center gap-2 shadow-sm transition-all"
                         >
                             {sortDirection === 'asc' ? (
                                 <>
@@ -174,10 +182,10 @@ const Patients = () => {
                     ))}
                 </div>
             ) : patients.length === 0 ? (
-                <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                    <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-slate-900">Aucun patient trouvé</h3>
-                    <p className="text-slate-500">Essayez d'ajuster votre recherche ou ajoutez un nouveau patient.</p>
+                <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-dashed border-slate-300 dark:border-slate-800">
+                    <FileText className="h-12 w-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-foreground">Aucun patient trouvé</h3>
+                    <p className="text-muted-foreground">Essayez d'ajuster votre recherche ou ajoutez un nouveau patient.</p>
                 </div>
             ) : (
                 <div className={cn(
@@ -185,41 +193,52 @@ const Patients = () => {
                     isPlaceholderData ? "opacity-50" : "opacity-100"
                 )}>
                     {patients.map((patient: Patient) => (
-                        <Card key={patient.id} className="hover:shadow-lg transition-all duration-300 group border-slate-200 hover:border-teal-200 rounded-xl overflow-hidden">
-                            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4 bg-slate-50/50">
-                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-md group-hover:scale-105 transition-transform">
+                        <Card key={patient.id} className="hover:shadow-lg transition-all duration-300 group border-slate-200 dark:border-slate-800 bg-card hover:border-teal-200 dark:hover:border-teal-900/50 rounded-xl overflow-hidden">
+                            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4 bg-slate-50 dark:bg-slate-900/50">
+                                <div className="w-14 h-14 rounded-full bg-teal-500 dark:bg-gradient-to-br dark:from-teal-400 dark:to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-md group-hover:scale-105 transition-transform">
                                     {(patient.nom_patient || '??').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <CardTitle className="text-lg font-bold text-slate-900 truncate">
+                                    <CardTitle className="text-lg font-bold text-foreground truncate">
                                         {patient.nom_patient}
                                     </CardTitle>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <p className="text-xs text-slate-500 font-mono truncate">{patient.numero_unique}</p>
+                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                        <p className="text-xs text-muted-foreground font-mono truncate">{patient.numero_unique}</p>
                                         <span className={cn(
                                             "text-[10px] uppercase font-bold px-2 py-0.5 rounded-full",
-                                            patient.sexe === 'Masculin' ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"
+                                            patient.sexe === 'Masculin'
+                                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                                : "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400"
                                         )}>
                                             {patient.sexe}
+                                        </span>
+                                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                            Actif
                                         </span>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-6 space-y-3">
-                                <div className="flex items-center text-sm text-slate-600">
+                                <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
                                     <Calendar className="w-4 h-4 mr-3 text-teal-500" />
                                     <span className="font-medium">{new Date(patient.date_naissance).toLocaleDateString()}</span>
                                 </div>
-                                <div className="flex items-center text-sm text-slate-600">
+                                <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
                                     <Phone className="w-4 h-4 mr-3 text-blue-500" />
                                     <span className="font-medium">{patient.contact_patient}</span>
                                 </div>
-                                <div className="flex items-center text-sm text-slate-600 truncate">
+                                <div className="flex items-center text-sm text-slate-600 dark:text-slate-400 truncate">
                                     <MapPin className="w-4 h-4 mr-3 text-amber-500 flex-shrink-0" />
                                     <span className="truncate">{patient.adresse}</span>
                                 </div>
                             </CardContent>
                             <CardFooter className="pt-2 gap-2">
+                                <Link to={`/patients/${patient.id}`} className="flex-1">
+                                    <Button variant="outline" size="sm" className="w-full hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200">
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        Dossier
+                                    </Button>
+                                </Link>
                                 <Button variant="outline" size="sm" className="flex-1 hover:bg-slate-50 hover:text-teal-600 hover:border-teal-200" onClick={() => handleEditClick(patient)}>
                                     <Edit className="w-4 h-4 mr-2" />
                                     Modifier
@@ -263,29 +282,31 @@ const Patients = () => {
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Nom Complet</label>
+                        <label className="text-sm font-medium text-foreground">Nom Complet</label>
                         <Input
                             required
                             value={currentPatient.nom_patient || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, nom_patient: e.target.value })}
                             placeholder="ex: Jean Dupont"
+                            className="bg-background"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Date de Naissance</label>
+                            <label className="text-sm font-medium text-foreground">Date de Naissance</label>
                             <Input
                                 type="date"
                                 required
                                 value={currentPatient.date_naissance || ''}
                                 onChange={(e) => setCurrentPatient({ ...currentPatient, date_naissance: e.target.value })}
+                                className="bg-background"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Sexe</label>
+                            <label className="text-sm font-medium text-foreground">Sexe</label>
                             <select
-                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 transition-colors"
                                 value={currentPatient.sexe || 'Masculin'}
                                 onChange={(e) => setCurrentPatient({ ...currentPatient, sexe: e.target.value })}
                             >
@@ -298,39 +319,42 @@ const Patients = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Téléphone</label>
+                            <label className="text-sm font-medium text-foreground">Téléphone</label>
                             <Input
                                 required
                                 value={currentPatient.contact_patient || ''}
                                 onChange={(e) => setCurrentPatient({ ...currentPatient, contact_patient: e.target.value })}
                                 placeholder="+221 ..."
+                                className="bg-background"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Email</label>
+                            <label className="text-sm font-medium text-foreground">Email</label>
                             <Input
                                 type="email"
                                 value={currentPatient.email_patient || ''}
                                 onChange={(e) => setCurrentPatient({ ...currentPatient, email_patient: e.target.value })}
                                 placeholder="patient@exemple.com"
+                                className="bg-background"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Adresse</label>
+                        <label className="text-sm font-medium text-foreground">Adresse</label>
                         <Input
                             required
                             value={currentPatient.adresse || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, adresse: e.target.value })}
                             placeholder="Adresse complète"
+                            className="bg-background"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Antécédents Médicaux</label>
+                        <label className="text-sm font-medium text-foreground">Antécédents Médicaux</label>
                         <textarea
-                            className="flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 transition-colors"
                             value={currentPatient.antecedents_medicaux || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, antecedents_medicaux: e.target.value })}
                             placeholder="Allergies, conditions chroniques, etc."
@@ -339,10 +363,11 @@ const Patients = () => {
 
                     {!isEditing && (
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">ID Unique (Généré)</label>
+                            <label className="text-sm font-medium text-foreground">ID Unique (Généré)</label>
                             <Input
                                 disabled
                                 value={currentPatient.numero_unique || ''}
+                                className="bg-muted opacity-70"
                             />
                         </div>
                     )}

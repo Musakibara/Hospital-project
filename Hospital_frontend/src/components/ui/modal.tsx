@@ -33,10 +33,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="absolute inset-0" onClick={onClose} />
-            <div className={`relative w-full ${widthClass} max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl animate-in zoom-in-95 duration-200 p-4 sm:p-6 m-4`}>
+            <div className={`relative w-full ${widthClass} max-h-[90vh] overflow-y-auto bg-card border border-border rounded-lg shadow-xl animate-in zoom-in-95 duration-200 p-4 sm:p-6 m-4 transition-colors`}>
                 <div className="flex items-center justify-between mb-4">
 
-                    <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+                    <h2 className="text-xl font-semibold text-foreground">{title}</h2>
                     <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 rounded-full p-0">
                         <X className="h-4 w-4" />
                     </Button>

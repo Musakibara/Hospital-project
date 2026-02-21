@@ -35,7 +35,7 @@ const DoctorDetail = ({ doctor, isOpen, onClose }: DoctorDetailProps) => {
                     </div>
                     <div className="flex-1 space-y-4">
                         <div className="flex flex-wrap items-center gap-3">
-                            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight">Dr. {doctor.nom_medecin}</h2>
+                            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight">Dr. {doctor.nom_medecin}</h2>
                             <div className="flex gap-2">
                                 <span className={cn(
                                     "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider",
@@ -73,7 +73,7 @@ const DoctorDetail = ({ doctor, isOpen, onClose }: DoctorDetailProps) => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-white border border-slate-100 rounded-xl text-center shadow-sm">
-                        <p className="text-3xl font-bold text-slate-900">{appointments.length}</p>
+                        <p className="text-3xl font-bold text-foreground">{appointments.length}</p>
                         <p className="text-xs text-slate-500 font-medium uppercase mt-1">Total Appointments</p>
                     </div>
                     <div className="p-4 bg-white border border-slate-100 rounded-xl text-center shadow-sm">
@@ -99,7 +99,7 @@ const DoctorDetail = ({ doctor, isOpen, onClose }: DoctorDetailProps) => {
                     {/* Appointments Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                            <h3 className="font-bold text-foreground flex items-center gap-2">
                                 <Calendar className="w-5 h-5 text-indigo-500" />
                                 Upcoming Appointments
                             </h3>
@@ -121,7 +121,7 @@ const DoctorDetail = ({ doctor, isOpen, onClose }: DoctorDetailProps) => {
                                                 <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
                                                     {appt.patient?.nom_patient?.charAt(0) || 'P'}
                                                 </div>
-                                                <span className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">
+                                                <span className="font-bold text-foreground text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                                     {appt.patient?.nom_patient || 'Unknown Patient'}
                                                 </span>
                                             </div>
@@ -155,7 +155,7 @@ const DoctorDetail = ({ doctor, isOpen, onClose }: DoctorDetailProps) => {
                     {/* Medical Visits Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                            <h3 className="font-bold text-foreground flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-teal-500" />
                                 Recent Consultations
                             </h3>
@@ -173,7 +173,7 @@ const DoctorDetail = ({ doctor, isOpen, onClose }: DoctorDetailProps) => {
                                 visits.slice(0, 5).map((visit: any) => (
                                     <div key={visit.id} className="p-3 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-shadow">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="font-bold text-slate-800 text-sm">
+                                            <span className="font-bold text-foreground text-sm">
                                                 {visit.patient?.nom_patient || 'Private Patient'}
                                             </span>
                                             <span className="text-[10px] text-slate-400 font-mono">

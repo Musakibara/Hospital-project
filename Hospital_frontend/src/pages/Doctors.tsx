@@ -152,7 +152,7 @@ const Doctors = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Médecins</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Médecins</h1>
                     <p className="text-slate-500 mt-1">Gérez le personnel médical et les spécialistes de l'hôpital.</p>
                 </div>
                 <Button onClick={handleAddClick} className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20">
@@ -184,8 +184,8 @@ const Doctors = () => {
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap",
                                 availabilityFilter === btn.value
-                                    ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
-                                    : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                                    ? "bg-background text-foreground shadow-sm border border-border"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                             )}
                         >
                             <btn.icon className={cn("w-4 h-4", availabilityFilter === btn.value && btn.color)} />
@@ -204,7 +204,7 @@ const Doctors = () => {
             ) : filteredDoctors.length === 0 ? (
                 <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
                     <User className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-slate-900">Aucun médecin trouvé</h3>
+                    <h3 className="text-lg font-medium text-foreground">Aucun médecin trouvé</h3>
                     <p className="text-slate-500">Commencez par ajouter un nouveau médecin.</p>
                 </div>
             ) : (
@@ -216,7 +216,7 @@ const Doctors = () => {
                                     {doctor.nom_medecin.charAt(0)}
                                 </div>
                                 <div>
-                                    <CardTitle className="text-lg font-bold text-slate-900">Dr. {doctor.nom_medecin}</CardTitle>
+                                    <CardTitle className="text-lg font-bold text-foreground">Dr. {doctor.nom_medecin}</CardTitle>
                                     <p className="text-sm text-teal-600 font-semibold">{doctor.specialite}</p>
                                 </div>
                             </CardHeader>
@@ -292,7 +292,7 @@ const Doctors = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Nom</label>
+                            <label className="text-sm font-medium text-muted-foreground">Nom</label>
                             <Input
                                 required
                                 value={currentDoctor.nom_medecin || ''}
@@ -301,7 +301,7 @@ const Doctors = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Spécialité</label>
+                            <label className="text-sm font-medium text-muted-foreground">Spécialité</label>
                             <Input
                                 required
                                 value={currentDoctor.specialite || ''}
@@ -313,7 +313,7 @@ const Doctors = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Email</label>
+                            <label className="text-sm font-medium text-muted-foreground">Email</label>
                             <Input
                                 type="email"
                                 required
@@ -323,7 +323,7 @@ const Doctors = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Téléphone</label>
+                            <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
                             <Input
                                 required
                                 value={currentDoctor.contact_medecin || ''}
@@ -335,7 +335,7 @@ const Doctors = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Genre</label>
+                            <label className="text-sm font-medium text-muted-foreground">Genre</label>
                             <select
                                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
                                 value={currentDoctor.genre_medecin || 'Masculin'}

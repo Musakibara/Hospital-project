@@ -43,7 +43,7 @@ const Signup = () => {
     };
 
     return (
-        <div className="min-h-screen grid lg:grid-cols-2 relative overflow-hidden bg-slate-50">
+        <div className="min-h-screen grid lg:grid-cols-2 relative overflow-hidden bg-background">
             {/* Background Decorations */}
             <div className="absolute top-[-10%] left-[-10%] w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] bg-teal-400/20 rounded-full blur-3xl" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[250px] h-[250px] sm:w-[500px] sm:h-[500px] bg-blue-400/20 rounded-full blur-3xl" />
@@ -62,7 +62,6 @@ const Signup = () => {
                             <HeartPulse className="w-12 h-12 text-teal-400" />
                         </div>
                     </div>
-                    <h1 className="text-4xl font-bold mb-4 font-sans tracking-tight">Join Our Community</h1>
                     <p className="text-slate-300 text-lg leading-relaxed">
                         Create an account to manage your medical practice with our advanced platform.
                     </p>
@@ -77,16 +76,16 @@ const Signup = () => {
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    <Card className="border-slate-200/60 shadow-xl bg-white/80 backdrop-blur-xl">
+                    <Card className="border-border/60 shadow-xl bg-card/80 backdrop-blur-xl">
                         <CardHeader className="space-y-1">
-                            <CardTitle className="text-2xl font-bold text-slate-900">Create an account</CardTitle>
+                            <CardTitle className="text-2xl font-bold text-foreground">Create an account</CardTitle>
                             <CardDescription>Enter your details to get started</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <User className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="text"
                                             placeholder="Full Name"
@@ -99,7 +98,7 @@ const Signup = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="email"
                                             placeholder="name@hospital.com"
@@ -112,7 +111,7 @@ const Signup = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="password"
                                             placeholder="Password"
@@ -125,7 +124,7 @@ const Signup = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <div className="relative">
-                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                         <Input
                                             type="password"
                                             placeholder="Confirm Password"
@@ -137,8 +136,8 @@ const Signup = () => {
                                     </div>
                                 </div>
                                 {error && (
-                                    <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md border border-red-100 flex items-center gap-2">
-                                        <span className="w-1 h-1 rounded-full bg-red-500" />
+                                    <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20 flex items-center gap-2">
+                                        <span className="w-1 h-1 rounded-full bg-destructive" />
                                         {error}
                                     </div>
                                 )}
@@ -159,7 +158,7 @@ const Signup = () => {
                             </form>
                         </CardContent>
                         <CardFooter className="justify-center flex-col space-y-2">
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-muted-foreground">
                                 Already have an account?{' '}
                                 <Link to="/login" className="text-teal-600 hover:text-teal-500 font-medium transition-colors">
                                     Sign In
