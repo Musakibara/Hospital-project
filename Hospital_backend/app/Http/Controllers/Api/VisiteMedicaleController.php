@@ -22,8 +22,13 @@ class VisiteMedicaleController extends Controller
             $query->byPatient($request->patient_id);
         }
 
-        // Filter by Medecin
-        if ($request->has('medecin_id')) {
+        // --- Isolation par Rôle ---
+        $user = $request->user();
+        if ($user && $user->role === 'medecin' && $user->medecin) {
+            // Un médecin ne voit QUE ses propres visites
+            $query->byMedecin($user->medecin->id);
+        } elseif ($request->has('medecin_id')) {
+            // Pour les admins, on applique le filtre demandé
             $query->byMedecin($request->medecin_id);
         }
 
@@ -72,9 +77,16 @@ class VisiteMedicaleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $visite = VisiteMedicale::with(['patient', 'medecin', 'rendezVous'])->findOrFail($id);
+        $user = $request->user();
+
+        // Sécurité : Un médecin ne peut voir que ses propres visites
+        if ($user->role === 'medecin' && $user->medecin && $visite->medecin_id !== $user->medecin->id) {
+            return response()->json(['message' => 'Accès non autorisé à cette visite'], 403);
+        }
+
         return new VisiteMedicaleResource($visite);
     }
 
@@ -84,6 +96,12 @@ class VisiteMedicaleController extends Controller
     public function update(Request $request, string $id)
     {
         $visite = VisiteMedicale::findOrFail($id);
+        $user = $request->user();
+
+        // Sécurité : Un médecin ne peut modifier que ses propres visites
+        if ($user->role === 'medecin' && $user->medecin && $visite->medecin_id !== $user->medecin->id) {
+            return response()->json(['message' => 'Accès non autorisé : Vous ne pouvez pas modifier une visite d\'un confrère'], 403);
+        }
 
         $validated = $request->validate([
             'examen' => 'sometimes|string',

@@ -22,7 +22,7 @@ class RendezVousResource extends JsonResource
             'motif' => $this->motif,
             'statut' => $this->statut,
             'observation' => $this->observation,
-            'has_visite' => $this->visiteMedicale ? true : false,
+            'visite_id' => $this->visiteMedicale ? $this->visiteMedicale->id : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

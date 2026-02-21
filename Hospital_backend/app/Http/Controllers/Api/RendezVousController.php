@@ -53,8 +53,13 @@ class RendezVousController extends Controller
             $query->whereDate('date_heure', $request->date);
         }
 
-        // Filter by Medecin (for calendar view)
-        if ($request->has('medecin_id')) {
+        // --- Isolation par Rôle ---
+        $user = $request->user();
+        if ($user && $user->role === 'medecin' && $user->medecin) {
+            // Un médecin ne voit QUE ses propres RDV
+            $query->byMedecin($user->medecin->id);
+        } elseif ($request->has('medecin_id')) {
+            // Pour les admins/autres, on applique le filtre demandé
             $query->byMedecin($request->medecin_id);
         }
 
@@ -197,9 +202,16 @@ class RendezVousController extends Controller
      *     )
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $rendezVous = RendezVous::with(['patient', 'medecin', 'visiteMedicale'])->findOrFail($id);
+        $user = $request->user();
+
+        // Sécurité : Un médecin ne peut voir que ses propres RDV
+        if ($user->role === 'medecin' && $user->medecin && $rendezVous->medecin_id !== $user->medecin->id) {
+            return response()->json(['message' => 'Accès non autorisé à ce rendez-vous'], 403);
+        }
+
         return new RendezVousResource($rendezVous);
     }
 
@@ -229,6 +241,12 @@ class RendezVousController extends Controller
     public function update(Request $request, string $id)
     {
         $rendezVous = RendezVous::findOrFail($id);
+        $user = $request->user();
+
+        // Sécurité : Un médecin ne peut modifier que ses propres RDV
+        if ($user->role === 'medecin' && $user->medecin && $rendezVous->medecin_id !== $user->medecin->id) {
+            return response()->json(['message' => 'Accès non autorisé : Vous ne pouvez pas modifier un rendez-vous d\'un confrère'], 403);
+        }
 
         $validated = $request->validate([
             'medecin_id' => 'sometimes|exists:medecins,id',
@@ -314,9 +332,16 @@ class RendezVousController extends Controller
      *     )
      * )
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $rendezVous = RendezVous::findOrFail($id);
+        $user = $request->user();
+
+        // Sécurité : Un médecin ne peut supprimer que ses propres RDV
+        if ($user->role === 'medecin' && $user->medecin && $rendezVous->medecin_id !== $user->medecin->id) {
+            return response()->json(['message' => 'Accès non autorisé : Vous ne pouvez pas supprimer un rendez-vous d\'un confrère'], 403);
+        }
+
         $rendezId = $rendezVous->id;
         $rendezVous->delete();
 

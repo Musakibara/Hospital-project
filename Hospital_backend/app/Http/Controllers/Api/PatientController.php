@@ -65,9 +65,42 @@ class PatientController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $patient = Patient::with(['rendezVous', 'visitesMedicales'])->findOrFail($id);
+        $user = $request->user();
+
+        // Vérification du rôle
+        if (!in_array($user->role, ['admin', 'medecin'])) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
+        // Si médecin, vérifier s'il est actif
+        if ($user->role === 'medecin') {
+            $medecin = $user->medecin;
+            if (!$medecin || !$medecin->actif) {
+                return response()->json(['message' => 'Votre compte médecin est inactif'], 403);
+            }
+        }
+
+        // Isolation du dossier patient pour les médecins : on ne montre que ses propres RDV et visites
+        if ($user->role === 'medecin' && $user->medecin) {
+            $medecinId = $user->medecin->id;
+            $patient = Patient::with([
+                'rendezVous' => function($q) use ($medecinId) {
+                    $q->where('medecin_id', $medecinId)->with('medecin');
+                },
+                'visitesMedicales' => function($q) use ($medecinId) {
+                    $q->where('medecin_id', $medecinId)->with('medecin');
+                }
+            ])->findOrFail($id);
+        } else {
+            $patient = Patient::with(['rendezVous.medecin', 'visitesMedicales.medecin'])->findOrFail($id);
+        }
+
+        // Logging de l'accès (Tracé de consultation)
+        $roleLabel = $user->role === 'admin' ? 'Administrateur' : 'Dr. ' . ($user->medecin->nom_medecin ?? $user->name);
+        NotificationController::log("Consultation dossier patient ID:{$id} ({$patient->nom_patient}) par {$roleLabel}", 'info');
+
         return new PatientResource($patient);
     }
 
