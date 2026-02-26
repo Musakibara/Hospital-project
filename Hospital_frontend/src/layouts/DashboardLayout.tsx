@@ -129,15 +129,15 @@ const DashboardLayout = () => {
                     </nav>
 
                     <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
+                        <Link to="/profile" className="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all border border-transparent hover:border-teal-100 dark:hover:border-teal-800 group">
+                            <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-700 dark:text-teal-400 font-bold text-sm group-hover:scale-110 transition-transform">
                                 {user?.name?.[0] || 'U'}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-foreground truncate">{user?.name || 'User'}</p>
-                                <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@hospital.com'}</p>
+                                <p className="text-xs text-muted-foreground truncate group-hover:text-teal-600 transition-colors">Mon Profil</p>
                             </div>
-                        </div>
+                        </Link>
                         <Button
                             variant="ghost"
                             className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"

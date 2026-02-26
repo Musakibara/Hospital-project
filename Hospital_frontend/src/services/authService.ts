@@ -9,6 +9,9 @@ export interface User {
         id: number;
         nom_medecin: string;
         specialite: string;
+        contact_medecin: string;
+        email_medecin: string;
+        genre_medecin: 'Masculin' | 'Féminin' | 'Autre';
     };
 }
 
@@ -60,6 +63,18 @@ export const authService = {
             sessionStorage.removeItem('auth_token');
             sessionStorage.removeItem('user_info');
         }
+    },
+
+    async updateProfile(data: any): Promise<User> {
+        const response = await api.put<{ user: User }>('/user', data);
+        const { user } = response.data;
+        sessionStorage.setItem('user_info', JSON.stringify(user));
+        return user;
+    },
+
+    async updatePassword(data: any): Promise<{ message: string }> {
+        const response = await api.put<{ message: string }>('/user/password', data);
+        return response.data;
     },
 
     getCurrentUser(): User | null {

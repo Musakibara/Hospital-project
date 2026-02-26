@@ -18,6 +18,7 @@ const Appointments = lazy(() => import('./pages/Appointments'));
 const Consultations = lazy(() => import('./pages/Consultations'));
 const PatientRecord = lazy(() => import('./pages/PatientRecord'));
 const MedicalConsultation = lazy(() => import('./pages/MedicalConsultation'));
+const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Composant de chargement (Fallback pour Suspense)
@@ -103,6 +104,7 @@ function App() {
                                 <Route path="notifications" element={<Notifications />} />
                                 <Route path="appointments" element={<Appointments />} />
                                 <Route path="consultations" element={<Consultations />} />
+                                <Route path="profile" element={<Profile />} />
                             </Route>
                             <Route path="*" element={<NotFound />} />
                         </Routes>

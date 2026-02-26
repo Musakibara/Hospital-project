@@ -83,7 +83,6 @@ const Patients = () => {
 
     const handleAddClick = useCallback(() => {
         setCurrentPatient({
-            numero_unique: `PAT-${Math.floor(Math.random() * 10000)}`,
             nom_patient: '',
             date_naissance: '',
             sexe: 'Masculin',
@@ -203,7 +202,7 @@ const Patients = () => {
                                         {patient.nom_patient}
                                     </CardTitle>
                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                        <p className="text-xs text-muted-foreground font-mono truncate">{patient.numero_unique}</p>
+                                        {/* unique number hide: not shown on card */}
                                         <span className={cn(
                                             "text-[10px] uppercase font-bold px-2 py-0.5 rounded-full",
                                             patient.sexe === 'Masculin'
@@ -231,22 +230,41 @@ const Patients = () => {
                                     <MapPin className="w-4 h-4 mr-3 text-amber-500 flex-shrink-0" />
                                     <span className="truncate">{patient.adresse}</span>
                                 </div>
+                                {patient.profession && (
+                                    <div className="mt-2">
+                                        <span className="inline-block bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-100 text-xs font-medium px-2 py-0.5 rounded-full truncate">
+                                            {patient.profession}
+                                        </span>
+                                    </div>
+                                )}
                             </CardContent>
-                            <CardFooter className="pt-2 gap-2">
-                                <Link to={`/patients/${patient.id}`} className="flex-1">
-                                    <Button variant="outline" size="sm" className="w-full hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200">
+                            <CardFooter className="pt-2 pb-4 px-6 flex flex-col gap-2">
+                                <Link to={'/patients/' + patient.id} className="w-full">
+                                    <Button variant="premium" size="sm" className="w-full h-10 shadow-md">
                                         <FileText className="w-4 h-4 mr-2" />
-                                        Dossier
+                                        Dossier Patient
                                     </Button>
                                 </Link>
-                                <Button variant="outline" size="sm" className="flex-1 hover:bg-slate-50 hover:text-teal-600 hover:border-teal-200" onClick={() => handleEditClick(patient)}>
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Modifier
-                                </Button>
-                                <Button variant="outline" size="sm" className="flex-1 hover:bg-red-50 hover:text-red-600 hover:border-red-200" onClick={() => patient.id && handleDeleteClick(patient.id)}>
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Supprimer
-                                </Button>
+                                <div className="grid grid-cols-2 gap-2 w-full">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-9 text-slate-600 hover:text-teal-600 hover:bg-teal-50 dark:text-slate-400 dark:hover:text-teal-400 dark:hover:bg-teal-900/30 transition-all border border-transparent hover:border-teal-100 dark:hover:border-teal-900/50"
+                                        onClick={() => handleEditClick(patient)}
+                                    >
+                                        <Edit className="w-3.5 h-3.5 mr-2" />
+                                        Modifier
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-9 text-slate-600 hover:text-destructive hover:bg-destructive/10 dark:text-slate-400 dark:hover:bg-destructive/20 transition-all border border-transparent hover:border-destructive/20"
+                                        onClick={() => patient.id && handleDeleteClick(patient.id)}
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                        Supprimer
+                                    </Button>
+                                </div>
                             </CardFooter>
                         </Card>
                     ))}
@@ -346,7 +364,17 @@ const Patients = () => {
                             required
                             value={currentPatient.adresse || ''}
                             onChange={(e) => setCurrentPatient({ ...currentPatient, adresse: e.target.value })}
-                            placeholder="Adresse complète"
+                            placeholder="14 Rue de l'Hôpital, Dakar"
+                            className="bg-background"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Profession</label>
+                        <Input
+                            value={currentPatient.profession || ''}
+                            onChange={(e) => setCurrentPatient({ ...currentPatient, profession: e.target.value })}
+                            placeholder="Ex : Infirmier, Ingénieur, etc."
                             className="bg-background"
                         />
                     </div>
@@ -367,6 +395,7 @@ const Patients = () => {
                             <Input
                                 disabled
                                 value={currentPatient.numero_unique || ''}
+                                placeholder="ID Généré apres Enregistrement"
                                 className="bg-muted opacity-70"
                             />
                         </div>
