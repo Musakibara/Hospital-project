@@ -34,7 +34,9 @@ class PatientController extends Controller
             $query->orderBy('nom_patient', 'asc');
         }
 
-        $patients = $query->paginate(20);
+        // allow clients to request a custom page size, default to 12
+        $perPage = (int) $request->get('per_page', 12);
+        $patients = $query->paginate($perPage);
         return PatientResource::collection($patients);
     }
 
@@ -44,7 +46,8 @@ class PatientController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'numero_unique' => 'required|unique:patients',
+            // numero_unique is generated automatically (ULID) if not provided
+            'numero_unique' => 'nullable|unique:patients',
             'nom_patient' => 'required|string|max:255',
             'date_naissance' => 'required|date',
             'sexe' => 'required|string',

@@ -175,27 +175,40 @@ class MedecinController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $medecin = Medecin::findOrFail($id);
+        $medecin = Medecin::with('user')->findOrFail($id);
 
         $validated = $request->validate([
             'nom_medecin' => 'sometimes|required|string|max:255',
             'specialite' => 'sometimes|required|string|max:255',
             'contact_medecin' => 'sometimes|required|string|max:255',
-            'email_medecin' => 'sometimes|required|email|max:255',
+            'email_medecin' => 'sometimes|required|email|max:255|unique:users,email,' . ($medecin->user_id ?? 0),
             'genre_medecin' => 'sometimes|required|in:Masculin,Féminin,Autre',
             'actif' => 'sometimes|boolean',
             'can_edit_profile' => 'boolean',
             'disponible' => 'sometimes|boolean',
         ]);
 
-        // Logic: if account is deactivated, it must be unavailable
-        if (isset($validated['actif']) && $validated['actif'] == false) {
-            $validated['disponible'] = false;
-        }
+        return DB::transaction(function () use ($medecin, $validated) {
+            // Logic: if account is deactivated, it must be unavailable
+            if (isset($validated['actif']) && $validated['actif'] == false) {
+                $validated['disponible'] = false;
+            }
 
-        $medecin->update($validated);
+            // Sync User data if provided
+            if ($medecin->user) {
+                $userData = [];
+                if (isset($validated['nom_medecin'])) $userData['name'] = $validated['nom_medecin'];
+                if (isset($validated['email_medecin'])) $userData['email'] = $validated['email_medecin'];
+                
+                if (!empty($userData)) {
+                    $medecin->user->update($userData);
+                }
+            }
 
-        return new MedecinResource($medecin);
+            $medecin->update($validated);
+
+            return new MedecinResource($medecin);
+        });
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Patient extends Model
 {
@@ -61,7 +62,20 @@ class Patient extends Model
     }
 
    /**
-     * Scope a query to search by name or unique number.
+     * Boot the model to auto-generate numero_unique (UUIDv7) before creating.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->numero_unique)) {
+                $model->numero_unique = Str::ulid();
+            }
+        });
+    }
+
+    /**
      */
     public function scopeSearch($query, $search)
     {

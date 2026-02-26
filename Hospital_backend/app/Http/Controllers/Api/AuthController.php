@@ -142,4 +142,74 @@ class AuthController extends Controller
 
         return response()->json($user);
     }
+
+    /**
+     * Update the authenticated user's profile.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+        ]);
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $validated, $request) {
+            $user->update($validated);
+
+            // If user is a medecin, sync the medecin profile as well
+            if ($user->role === 'medecin' && $user->medecin) {
+                $medecinData = $request->validate([
+                    'nom_medecin' => 'sometimes|string|max:255',
+                    'specialite' => 'sometimes|string|max:255',
+                    'contact_medecin' => 'sometimes|string|max:255',
+                    'email_medecin' => 'sometimes|email|max:255|unique:users,email,' . $user->id,
+                    'genre_medecin' => 'sometimes|in:Masculin,Féminin,Autre',
+                ]);
+
+                // Sync name and email to medecin table if they were updated in user table
+                if (isset($validated['name'])) $medecinData['nom_medecin'] = $validated['name'];
+                if (isset($validated['email'])) $medecinData['email_medecin'] = $validated['email'];
+
+                $user->medecin->update($medecinData);
+            }
+
+            if ($user->role === 'medecin') {
+                $user->load('medecin');
+            }
+
+            return response()->json([
+                'message' => 'Profil mis à jour avec succès',
+                'user' => $user
+            ]);
+        });
+    }
+
+    /**
+     * Change the authenticated user's password.
+     */
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Le mot de passe actuel est incorrect.'
+            ], 422);
+        }
+
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($request->new_password)
+        ]);
+
+        return response()->json([
+            'message' => 'Mot de passe modifié avec succès.'
+        ]);
+    }
 }
