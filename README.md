@@ -66,30 +66,17 @@ Hospital_backend/
 ## 🔌 Points d'Accès API
 
 ### Authentification
-- `POST /api/auth/register` - Enregistrer un nouvel utilisateur
-- `POST /api/auth/login` - Se connecter
-- `POST /api/auth/logout` - Se déconnecter
-- `GET /api/auth/me` - Obtenir le profil actuel
-
-### Utilisateurs
-- `GET /api/users` - Lister tous les utilisateurs
-- `GET /api/users/{id}` - Obtenir un utilisateur
-- `PUT /api/users/{id}` - Mettre à jour un utilisateur
-- `DELETE /api/users/{id}` - Supprimer un utilisateur
-
-### Hôpitaux
-- `GET /api/hospitals` - Lister les hôpitaux
-- `POST /api/hospitals` - Créer un hôpital
-- `GET /api/hospitals/{id}` - Obtenir un hôpital
-- `PUT /api/hospitals/{id}` - Mettre à jour un hôpital
-- `DELETE /api/hospitals/{id}` - Supprimer un hôpital
+- `POST /api/register` - Enregistrer un nouvel utilisateur
+- `POST /api/login` - Se connecter
+- `POST /api/logout` - Se déconnecter
+- `GET /api/user` - Obtenir le profil actuel
 
 ### Médecins
-- `GET /api/doctors` - Lister les médecins
-- `POST /api/doctors` - Créer un médecin
-- `GET /api/doctors/{id}` - Obtenir un médecin
-- `PUT /api/doctors/{id}` - Mettre à jour un médecin
-- `DELETE /api/doctors/{id}` - Supprimer un médecin
+- `GET /api/medecins` - Lister les médecins
+- `POST /api/medecins` - Créer un médecin
+- `GET /api/medecins/{id}` - Obtenir un médecin
+- `PUT /api/medecins/{id}` - Mettre à jour un médecin
+- `DELETE /api/medecins/{id}` - Supprimer un médecin
 
 ### Patients
 - `GET /api/patients` - Lister les patients
@@ -99,18 +86,22 @@ Hospital_backend/
 - `DELETE /api/patients/{id}` - Supprimer un patient
 
 ### Rendez-vous
-- `GET /api/appointments` - Lister les rendez-vous
-- `POST /api/appointments` - Créer un rendez-vous
-- `GET /api/appointments/{id}` - Obtenir un rendez-vous
-- `PUT /api/appointments/{id}` - Mettre à jour un rendez-vous
-- `DELETE /api/appointments/{id}` - Supprimer un rendez-vous
+- `GET /api/rendez-vous` - Lister les rendez-vous
+- `POST /api/rendez-vous` - Créer un rendez-vous
+- `GET /api/rendez-vous/{id}` - Obtenir un rendez-vous
+- `PUT /api/rendez-vous/{id}` - Mettre à jour un rendez-vous
+- `DELETE /api/rendez-vous/{id}` - Supprimer un rendez-vous
 
-### Consultations
-- `GET /api/consultations` - Lister les consultations
-- `POST /api/consultations` - Enregistrer une consultation
-- `GET /api/consultations/{id}` - Obtenir une consultation
-- `PUT /api/consultations/{id}` - Mettre à jour une consultation
-- `DELETE /api/consultations/{id}` - Supprimer une consultation
+### Visites Médicales
+- `GET /api/visites-medicales` - Lister les visites médicales
+- `POST /api/visites-medicales` - Enregistrer une visite
+- `GET /api/visites-medicales/{id}` - Obtenir une visite
+- `PUT /api/visites-medicales/{id}` - Mettre à jour une visite
+
+### Notifications
+- `GET /api/notifications` - Lister les notifications
+- `POST /api/notifications/{id}/read` - Marquer comme lue
+- `POST /api/notifications/read-all` - Marquer tout comme lu
 
 ## 🔐 Authentification
 

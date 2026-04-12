@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class NotificationController extends Controller
 {
@@ -48,8 +51,18 @@ class NotificationController extends Controller
      */
     public static function log($message, $type = 'info')
     {
+        $userId = Auth::id();
+        
+        if (!$userId) {
+            $systemUser = User::firstOrCreate(
+                ['email' => 'system@hospital.local'],
+                ['name' => 'System', 'password' => Hash::make(Str::random(32)), 'role' => 'system']
+            );
+            $userId = $systemUser->id;
+        }
+
         Notification::create([
-            'user_id' => Auth::id() ?? 1, // Fallback to ID 1 if not auth (for dev/seeds)
+            'user_id' => $userId,
             'type' => $type,
             'message' => $message,
         ]);

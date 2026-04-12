@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\RendezVous;
 use Illuminate\Http\Request;
 use App\Http\Resources\RendezVousResource;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class RendezVousController extends Controller
@@ -34,6 +35,10 @@ class RendezVousController extends Controller
      */
     public function index(Request $request)
     {
+        if (Gate::denies('viewAny', RendezVous::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $query = RendezVous::with(['patient', 'medecin', 'visiteMedicale']);
 
         // Filter by Status (Support string, array or comma-separated)
@@ -112,6 +117,10 @@ class RendezVousController extends Controller
      */
     public function store(Request $request)
     {
+        if (Gate::denies('create', RendezVous::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'medecin_id' => 'required|exists:medecins,id',
@@ -204,14 +213,13 @@ class RendezVousController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $rendezVous = RendezVous::with(['patient', 'medecin', 'visiteMedicale'])->findOrFail($id);
-        $user = $request->user();
+        $rendezVous = RendezVous::findOrFail($id);
 
-        // Sécurité : Un médecin ne peut voir que ses propres RDV
-        if ($user->role === 'medecin' && $user->medecin && $rendezVous->medecin_id !== $user->medecin->id) {
+        if (Gate::denies('view', $rendezVous)) {
             return response()->json(['message' => 'Accès non autorisé à ce rendez-vous'], 403);
         }
 
+        $rendezVous->load(['patient', 'medecin', 'visiteMedicale']);
         return new RendezVousResource($rendezVous);
     }
 
@@ -241,11 +249,9 @@ class RendezVousController extends Controller
     public function update(Request $request, string $id)
     {
         $rendezVous = RendezVous::findOrFail($id);
-        $user = $request->user();
 
-        // Sécurité : Un médecin ne peut modifier que ses propres RDV
-        if ($user->role === 'medecin' && $user->medecin && $rendezVous->medecin_id !== $user->medecin->id) {
-            return response()->json(['message' => 'Accès non autorisé : Vous ne pouvez pas modifier un rendez-vous d\'un confrère'], 403);
+        if (Gate::denies('update', $rendezVous)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
         $validated = $request->validate([
@@ -335,11 +341,9 @@ class RendezVousController extends Controller
     public function destroy(Request $request, string $id)
     {
         $rendezVous = RendezVous::findOrFail($id);
-        $user = $request->user();
 
-        // Sécurité : Un médecin ne peut supprimer que ses propres RDV
-        if ($user->role === 'medecin' && $user->medecin && $rendezVous->medecin_id !== $user->medecin->id) {
-            return response()->json(['message' => 'Accès non autorisé : Vous ne pouvez pas supprimer un rendez-vous d\'un confrère'], 403);
+        if (Gate::denies('delete', $rendezVous)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
         $rendezId = $rendezVous->id;

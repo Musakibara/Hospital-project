@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Medecin;
 use Illuminate\Http\Request;
 use App\Http\Resources\MedecinResource;
+use Illuminate\Support\Facades\Gate;
 
 use App\Models\User;
 use App\Mail\DoctorWelcomeMail;
@@ -36,6 +37,10 @@ class MedecinController extends Controller
      */
     public function index(Request $request)
     {
+        if (Gate::denies('viewAny', Medecin::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $query = Medecin::with('user');
 
         if ($request->has('disponible')) {
@@ -51,7 +56,8 @@ class MedecinController extends Controller
             });
         }
 
-        $medecins = $query->get();
+        $perPage = (int) $request->get('per_page', 15);
+        $medecins = $query->paginate($perPage);
         return MedecinResource::collection($medecins);
     }
 
@@ -75,6 +81,10 @@ class MedecinController extends Controller
      */
     public function store(Request $request)
     {
+        if (Gate::denies('create', Medecin::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $validated = $request->validate([
             'nom_medecin' => 'required|string|max:255',
             'specialite' => 'required|string|max:255',
@@ -138,8 +148,14 @@ class MedecinController extends Controller
      *     )
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
+        $medecin = Medecin::findOrFail($id);
+
+        if (Gate::denies('view', $medecin)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $medecin = Medecin::with([
             'user', 
             'rendezVous.patient', 
@@ -176,6 +192,10 @@ class MedecinController extends Controller
     public function update(Request $request, string $id)
     {
         $medecin = Medecin::with('user')->findOrFail($id);
+
+        if (Gate::denies('update', $medecin)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
 
         $validated = $request->validate([
             'nom_medecin' => 'sometimes|required|string|max:255',
@@ -237,6 +257,10 @@ class MedecinController extends Controller
     public function destroy(string $id)
     {
         $medecin = Medecin::findOrFail($id);
+
+        if (Gate::denies('delete', $medecin)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
 
         try {
             return DB::transaction(function () use ($medecin) {

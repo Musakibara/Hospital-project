@@ -7,6 +7,7 @@ use App\Models\VisiteMedicale;
 use App\Models\RendezVous;
 use Illuminate\Http\Request;
 use App\Http\Resources\VisiteMedicaleResource;
+use Illuminate\Support\Facades\Gate;
 
 class VisiteMedicaleController extends Controller
 {
@@ -15,6 +16,10 @@ class VisiteMedicaleController extends Controller
      */
     public function index(Request $request)
     {
+        if (Gate::denies('viewAny', VisiteMedicale::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $query = VisiteMedicale::with(['patient', 'medecin']);
 
         // Filter by Patient
@@ -41,6 +46,10 @@ class VisiteMedicaleController extends Controller
      */
     public function store(Request $request)
     {
+        if (Gate::denies('create', VisiteMedicale::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'medecin_id' => 'required|exists:medecins,id',
@@ -79,14 +88,13 @@ class VisiteMedicaleController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $visite = VisiteMedicale::with(['patient', 'medecin', 'rendezVous'])->findOrFail($id);
-        $user = $request->user();
+        $visite = VisiteMedicale::findOrFail($id);
 
-        // Sécurité : Un médecin ne peut voir que ses propres visites
-        if ($user->role === 'medecin' && $user->medecin && $visite->medecin_id !== $user->medecin->id) {
+        if (Gate::denies('view', $visite)) {
             return response()->json(['message' => 'Accès non autorisé à cette visite'], 403);
         }
 
+        $visite->load(['patient', 'medecin', 'rendezVous']);
         return new VisiteMedicaleResource($visite);
     }
 
@@ -96,11 +104,9 @@ class VisiteMedicaleController extends Controller
     public function update(Request $request, string $id)
     {
         $visite = VisiteMedicale::findOrFail($id);
-        $user = $request->user();
 
-        // Sécurité : Un médecin ne peut modifier que ses propres visites
-        if ($user->role === 'medecin' && $user->medecin && $visite->medecin_id !== $user->medecin->id) {
-            return response()->json(['message' => 'Accès non autorisé : Vous ne pouvez pas modifier une visite d\'un confrère'], 403);
+        if (Gate::denies('update', $visite)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
         $validated = $request->validate([

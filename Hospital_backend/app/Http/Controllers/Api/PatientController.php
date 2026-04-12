@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use App\Http\Resources\PatientResource;
+use Illuminate\Support\Facades\Gate;
 
 class PatientController extends Controller
 {
@@ -14,6 +15,10 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
+        if (Gate::denies('viewAny', Patient::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $query = Patient::query();
 
         // Support de recherche textuelle globale (Nom ou Numéro unique)
@@ -45,6 +50,10 @@ class PatientController extends Controller
      */
     public function store(Request $request)
     {
+        if (Gate::denies('create', Patient::class)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $validated = $request->validate([
             // numero_unique is generated automatically (ULID) if not provided
             'numero_unique' => 'nullable|unique:patients',
@@ -71,21 +80,12 @@ class PatientController extends Controller
     public function show(Request $request, string $id)
     {
         $user = $request->user();
+        $patient = Patient::findOrFail($id);
 
-        // Vérification du rôle
-        if (!in_array($user->role, ['admin', 'medecin'])) {
+        if (Gate::denies('view', $patient)) {
             return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
-        // Si médecin, vérifier s'il est actif
-        if ($user->role === 'medecin') {
-            $medecin = $user->medecin;
-            if (!$medecin || !$medecin->actif) {
-                return response()->json(['message' => 'Votre compte médecin est inactif'], 403);
-            }
-        }
-
-        // Isolation du dossier patient pour les médecins : on ne montre que ses propres RDV et visites
         if ($user->role === 'medecin' && $user->medecin) {
             $medecinId = $user->medecin->id;
             $patient = Patient::with([
@@ -100,7 +100,6 @@ class PatientController extends Controller
             $patient = Patient::with(['rendezVous.medecin', 'visitesMedicales.medecin'])->findOrFail($id);
         }
 
-        // Logging de l'accès (Tracé de consultation)
         $roleLabel = $user->role === 'admin' ? 'Administrateur' : 'Dr. ' . ($user->medecin->nom_medecin ?? $user->name);
         NotificationController::log("Consultation dossier patient ID:{$id} ({$patient->nom_patient}) par {$roleLabel}", 'info');
 
@@ -114,8 +113,14 @@ class PatientController extends Controller
     {
         $patient = Patient::findOrFail($id);
 
+        if (Gate::denies('update', $patient)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $validated = $request->validate([
             'nom_patient' => 'sometimes|string|max:255',
+            'date_naissance' => 'sometimes|date',
+            'sexe' => 'sometimes|in:Masculin,Féminin,Autre',
             'contact_patient' => 'sometimes|string',
             'email_patient' => 'nullable|email|unique:patients,email_patient,' . $id,
             'adresse' => 'sometimes|string',
@@ -136,6 +141,11 @@ class PatientController extends Controller
     public function destroy(string $id)
     {
         $patient = Patient::findOrFail($id);
+
+        if (Gate::denies('delete', $patient)) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
         $patientName = $patient->nom_patient;
         $patient->delete();
 

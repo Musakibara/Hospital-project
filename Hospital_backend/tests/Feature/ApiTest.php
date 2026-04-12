@@ -34,8 +34,6 @@ class ApiTest extends TestCase
             'Authorization' => 'Bearer ' . $token,
         ])->getJson('/api/medecins');
 
-        $response->dump();
-
         $response->assertStatus(200)
                  ->assertJsonStructure([
                      'data' => [

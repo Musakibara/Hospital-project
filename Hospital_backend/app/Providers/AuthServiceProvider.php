@@ -2,25 +2,27 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Models\Medecin;
+use App\Models\Patient;
+use App\Models\RendezVous;
+use App\Models\VisiteMedicale;
+use App\Policies\MedecinPolicy;
+use App\Policies\PatientPolicy;
+use App\Policies\RendezVousPolicy;
+use App\Policies\VisiteMedicalePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    /**
-     * The model to policy mappings for the application.
-     *
-     * @var array<class-string, class-string>
-     */
     protected $policies = [
-        //
+        Patient::class => PatientPolicy::class,
+        Medecin::class => MedecinPolicy::class,
+        RendezVous::class => RendezVousPolicy::class,
+        VisiteMedicale::class => VisiteMedicalePolicy::class,
     ];
 
-    /**
-     * Register any authentication / authorization services.
-     */
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
     }
 }
